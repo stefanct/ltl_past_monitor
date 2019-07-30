@@ -1,6 +1,7 @@
 import sys
 import astpretty
 import ast
+import ltlpast
 
 TRACE = [
   {"p": 1, "q": 1, "r": 1, "s": 1},
@@ -14,7 +15,7 @@ def main(*args):
   namespace = {}
   with open("template.py") as f:
     tree = ast.parse(f.read())
-    # tree = ast.fix_missing_locations(tree)
+    ltlpast.transformer().visit(tree)
     astpretty.pprint(tree, show_offsets=False)
     exec(compile(tree, f.name, "exec"), namespace)
 

@@ -16,6 +16,7 @@ def solve(trace, clause_cnt):
   pre[1] = pre[2] and not pre[2]
   pre[0] = not pre[1] or pre[3];
 
+  template_init="template_init"
 
   # Event interpretation loop
   while trace:
