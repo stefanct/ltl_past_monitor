@@ -8,6 +8,7 @@ import datetime
 import sys
 import argparse
 import csv
+from debug import *
 
 WARN = '\033[33m'
 ENDC = '\033[0m'
@@ -47,14 +48,7 @@ if __name__ == "__main__":
 
   verbose = args.verbose
   
-  vprint = lambda *a, **k: None # do-nothing function
-  vvprint = lambda *a, **k: None # do-nothing function
-  if verbose > 0:
-    def vprint(*args, **kwargs):
-      print(*args, **kwargs)
-    if verbose > 1:
-      def vvprint(*args, **kwargs):
-        print(*args, **kwargs)
+  set_verbosity(verbose)
 
   csv = parse_csv(args.csv_file)
   parse_ltl(args.ltl_file, csv.fieldnames, args.debug)

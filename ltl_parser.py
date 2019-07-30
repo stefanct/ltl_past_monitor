@@ -1,5 +1,7 @@
 # based on PLY's calc.py
 
+from debug import *
+
 class lexer(object):
   # global tokens
 
