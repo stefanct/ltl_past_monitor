@@ -131,6 +131,21 @@ class ltl_parser(object):
     for v,k in enumerate(variables):
       self.syms[k] = v
 
+  # Print the tree in Polish notation in one line w/o a newline at the end
+  def print_tree_oneline(self, tree):
+    if isinstance(tree, Iterable):
+      vprintn(tree[0])
+      if len(tree) > 1:
+        vprintn("(")
+      for c in tree[1:-1]:
+        self.print_tree_oneline(c)
+        vprintn(",")
+      if len(tree) > 1:
+        self.print_tree_oneline(tree[-1])
+        vprintn(")")
+    else:
+      vprintn(tree)
+
   def print_tree(self, tree, cur_indent=0, indent_guides=False):
     _INDENT = 4
     for _ in range(1, (cur_indent) // _INDENT):

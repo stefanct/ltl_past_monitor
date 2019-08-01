@@ -30,8 +30,11 @@ def parse_ltl(path, variables, debug):
   p.set_variables(variables)
   with open(path, mode='r', newline='') as ltl_file:
     tree = p.parser.parse(ltl_file.read())
-  print("Tree:")
+  vprint("Tree:")
   p.print_tree(tree)
+  vprintn("Line: ")
+  p.print_tree_oneline(tree)
+  print()
 
 if __name__ == "__main__":
   import locale
