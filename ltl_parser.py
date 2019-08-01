@@ -138,14 +138,14 @@ class ltl_parser(object):
         # FIXME: we need to check if the respective level is done already
         #        by keeping a list of numbers of \\ not yet printed at
         #        each level.
-        vprint('.', end="")
-        vprint(' '*(_INDENT-1), end="")
+        vprintn('.')
+        vprintn(' '*(_INDENT-1))
       else:
-        vprint(' '*_INDENT, end="")
+        vprintn(' '*_INDENT)
     else:
       if cur_indent > 0 and indent_guides:
-        vprint('\\', end="")
-        vprint(' '*(_INDENT-1), end="")
+        vprintn('\\')
+        vprintn(' '*(_INDENT-1))
     cur_indent += _INDENT
 
     if isinstance(tree, Iterable):
