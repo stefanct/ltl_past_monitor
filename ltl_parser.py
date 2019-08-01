@@ -1,5 +1,6 @@
 # based on PLY's calc.py
 
+import re
 from debug import *
 from collections import Iterable
 
@@ -14,17 +15,18 @@ class lexer(object):
   # constructor
   def __init__(self,**kwargs):
     import ply.lex as lex
-    self.lexlexer = lex.lex(module=self, **kwargs)
+    self.lexlexer = lex.lex(module=self, reflags=re.IGNORECASE, **kwargs)
 
   # Define all keywords as functions to make sure they are ordered before t_SYM
   # We could also filter them out as reserved words in a t_SYM function (as suggested by the PLY docs)
   def t_NOT(self, t):
-    r'(not)|(NOT)|(!)'
+    r'(not)|(!)'
     return t
 
   def t_S_PREV(self, t):
     r's_prev'
     return t
+
   def t_W_PREV(self, t):
     r'w_prev'
     return t
@@ -54,23 +56,23 @@ class lexer(object):
     return t
 
   def t_OR(self, t):
-    r'(or)|(OR)|(v)'
+    r'(or)|(v)'
     return t
 
   def t_AND(self, t):
-    r'(and)|(AND)|(\^)'
+    r'(and)|(\^)'
     return t
 
   def t_IMP(self, t):
-    r'(implies)|(IMP(LIES)?)|(->)'
+    r'(imp(lies)?)|(->)'
     return t
 
   def t_SINCE(self, t):
-    r'(since)|(SINCE)'
+    r'(since)'
     return t
 
   def t_UNTIL(self, t):
-    r'(until)|(UNTIL)'
+    r'(until)'
     return t
 
   # Identifiers
