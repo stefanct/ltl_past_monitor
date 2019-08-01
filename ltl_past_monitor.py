@@ -8,6 +8,7 @@ import datetime
 import sys
 import argparse
 import csv
+from ltl_parser import ltl_parser
 from debug import *
 
 WARN = '\033[33m'
@@ -25,11 +26,12 @@ def parse_csv(path):
     return csv_reader
 
 def parse_ltl(path, variables, debug):
+  p = ltl_parser(debug)
+  p.set_variables(variables)
   with open(path, mode='r', newline='') as ltl_file:
-    from ltl_parser import ltl_parser
-    p = ltl_parser(debug)
-    p.set_variables(variables)
-    p.parser.parse(ltl_file.read())
+    tree = p.parser.parse(ltl_file.read())
+  print("Tree:")
+  p.print_tree(tree)
 
 if __name__ == "__main__":
   import locale

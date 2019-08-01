@@ -1,6 +1,7 @@
 # based on PLY's calc.py
 
 from debug import *
+from collections import Iterable
 
 class lexer(object):
   # global tokens
@@ -129,6 +130,30 @@ class ltl_parser(object):
   def set_variables(self, variables):
     for v,k in enumerate(variables):
       self.syms[k] = v
+
+  def print_tree(self, tree, cur_indent=0, indent_guides=False):
+    _INDENT = 4
+    for _ in range(1, (cur_indent) // _INDENT):
+      if indent_guides:
+        # FIXME: we need to check if the respective level is done already
+        #        by keeping a list of numbers of \\ not yet printed at
+        #        each level.
+        vprint('.', end="")
+        vprint(' '*(_INDENT-1), end="")
+      else:
+        vprint(' '*_INDENT, end="")
+    else:
+      if cur_indent > 0 and indent_guides:
+        vprint('\\', end="")
+        vprint(' '*(_INDENT-1), end="")
+    cur_indent += _INDENT
+
+    if isinstance(tree, Iterable):
+      vprint(tree[0])
+      for c in tree[1:]:
+        self.print_tree(c, cur_indent, indent_guides)
+    else:
+      vprint(tree)
 
 
   # YACC functions
