@@ -249,7 +249,7 @@ class ltl_parser(object):
   ######### UNARY OPs #########
   def p_expression_unop(self, t):
       '''expression : NOT expression'''
-      if isinstance(t[2], int):
+      if isinstance(t[2], bool):
         t[0] = not t[2]
       else:
         t[0] = ("NOT", t[2])
@@ -289,25 +289,42 @@ class ltl_parser(object):
   ######### BINARY OPs #########
   def p_expression_binop_or(self, t):
       '''expression : expression OR expression'''
-      if isinstance(t[1], int) and isinstance(t[3], int):
+      if isinstance(t[1], bool) and isinstance(t[3], bool):
         t[0] = t[1] or t[3]
+      elif (isinstance(t[1], bool) and t[1]) or (isinstance(t[3], bool) and t[3]):
+        t[0] = True
+      elif isinstance(t[1], bool):
+        t[0] = t[3]
+      elif isinstance(t[3], bool):
+        t[0] = t[1]
       else:
         t[0] = ("OR", t[1], t[3])
 
   def p_expression_binop_and(self, t):
       '''expression : expression AND expression'''
-      if isinstance(t[1], int) and isinstance(t[3], int):
+      if isinstance(t[1], bool) and isinstance(t[3], bool):
         t[0] = t[1] and t[3]
+      elif (isinstance(t[1], bool) and not t[1]) or (isinstance(t[3], bool) and not t[3]):
+        t[0] = False
+      elif isinstance(t[1], bool):
+        t[0] = t[3]
+      elif isinstance(t[3], bool):
+        t[0] = t[1]
       else:
         t[0] = ("AND", t[1], t[3])
 
   def p_expression_binop_imp(self, t):
       '''expression : expression IMP expression'''
-      if isinstance(t[1], int) and isinstance(t[3], int):
+      if isinstance(t[1], bool) and isinstance(t[3], bool):
         t[0] = not t[1] or t[3]
+      elif isinstance(t[1], bool) and t[1]:
+        t[0] = t[3]
+      elif isinstance(t[1], bool) and not t[1]:
+        t[0] = True
       else:
         t[0] = ("IMP", t[1], t[3])
 
+  # FIXME: SINCE and UNTIL could be optimized similarly
   def p_expression_binop_since(self, t):
       '''expression : expression SINCE expression'''
       t[0] = ("SINCE", t[1], t[3])
