@@ -28,8 +28,14 @@ def parse_csv(path):
 def parse_ltl(path, variables, debug):
   p = ltl_parser(debug)
   p.set_variables(variables)
-  with open(path, mode='r', newline='') as ltl_file:
-    tree = p.parser.parse(ltl_file.read())
+  try:
+    with open(path, mode='r', newline=None) as ltl_file:
+      text = ltl_file.read()
+    tree = p.parser.parse(text)
+  except Exception as e:
+    print("%s Exiting." % e.args[0])
+    exit(1)
+
   vprint("Tree:")
   p.print_tree(tree)
   vprintn("Line: ")
