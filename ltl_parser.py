@@ -113,14 +113,18 @@ class lexer(object):
 
 # YACC rules
 class ltl_parser(object):
+  start = 'formula' # Make sure we use the right rule as root of the grammar
   tokens = lexer.tokens
   precedence = (
     ('right','NOT','S_PREV','W_PREV','S_NEXT','W_NEXT','ONCE','HIST','EVENTUALLY','ALWAYS'),
     ('left','OR','AND','IMP','SINCE','UNTIL'),
   )
 
-  # dictionary of symbols, supplied by set_variables
+  # dictionary of symbols
+  #   keys are supplied by set_variables
+  #   values are assigned by the parser
   syms = { }
+  sym_nxt = 0
 
   def __init__(self, debug, **kwargs):
     import ply.yacc as yacc
@@ -129,7 +133,7 @@ class ltl_parser(object):
 
   def set_variables(self, variables):
     for v,k in enumerate(variables):
-      self.syms[k] = v
+      self.syms[k] = -1
 
   # Print the tree in Polish notation in one line w/o a newline at the end
   def print_tree_oneline(self, tree):
@@ -170,58 +174,7 @@ class ltl_parser(object):
     else:
       vprint(tree)
 
-
-  # YACC functions
-  def p_expression_unop(self, t):
-      '''expression : NOT expression
-      '''
-      t[0] = not t[2]
-
-  def p_expression_unop_res(self, t):
-      '''expression : S_PREV expression
-                    | W_PREV expression
-                    | S_NEXT expression
-                    | W_NEXT expression
-                    | ONCE expression
-                    | HIST expression
-                    | EVENTUALLY expression
-                    | ALWAYS expression
-      '''
-      print("[1]: %s, [2]: %s" % (t[1], t[2]))
-
-  def p_expression_binop(self, t):
-      '''expression : expression OR expression
-                    | expression AND expression
-                    | expression IMP expression
-                    | expression SINCE expression
-                    | expression UNTIL expression
-      '''
-      if t[2] == '+'  : t[0] = t[1] + t[3]
-      elif t[2] == '-': t[0] = t[1] - t[3]
-      elif t[2] == '*': t[0] = t[1] * t[3]
-      elif t[2] == '/': t[0] = t[1] / t[3]
-      else:
-        print("Unknown binop %s" % t[2])
-
-  def p_expression_group(self, t):
-      '''expression : '(' expression ')' '''
-      t[0] = t[2]
-      print("(((())))")
-
-  def p_expression_bool(self, t):
-      'expression : BOOL'
-      t[0] = t[1]
-
-  def p_expression_sym(self, t):
-      'expression : SYM'
-      try:
-          t[0] = self.syms[t[1]]
-      except LookupError:
-          print("Undefined symbol '%s'" % t[1])
-          t[0] = 0
-      except Error as e:
-          print("Unknown error in sym lookup: %s" % (e))
-
+  ######### Helper functions #########
   def p_error(self, t):
       s=""
       if t == None:
@@ -229,3 +182,103 @@ class ltl_parser(object):
       else:
         s = "Syntax error at line %d: '%s'" % (t.lineno, t.value)
       raise Exception("Parser error: %s" % s)
+
+  def p_formula(self, t):
+      '''formula : start expression '''
+      vvprint("Finished parsing")
+      t[0] = t[2]
+
+  def p_start(self, t):
+      '''start :'''
+      vvprint("Starting parsing")
+
+  ######### NULLARY OPs #########
+  def p_expression_group(self, t):
+      '''expression : '(' expression ')' '''
+      t[0] = t[2]
+
+  def p_expression_bool(self, t):
+      '''expression : BOOL'''
+      t[0] = t[1]
+
+  def p_expression_sym(self, t):
+      '''expression : SYM'''
+      if not t[1] in self.syms:
+        raise LookupError("Symbol found in formula that is not contained in trace: '%s'" % t[1])
+      val = self.syms[t[1]]
+      if (val == -1):
+        val = self.sym_nxt
+        self.syms[t[1]] = val
+        self.sym_nxt += 1
+        vvprint("new sym: %s (%d)" % (t[1], val))
+      t[0] = t[1]
+
+  ######### UNARY OPs #########
+  def p_expression_unop(self, t):
+      '''expression : NOT expression'''
+      if isinstance(t[2], int):
+        t[0] = not t[2]
+      else:
+        t[0] = ("NOT", t[2])
+
+  def p_expression_unop_eventually(self, t):
+      '''expression : EVENTUALLY expression'''
+      t[0] = ("EVENTUALLY", t[2])
+
+  def p_expression_unop_always(self, t):
+      '''expression : ALWAYS expression'''
+      t[0] = ("ALWAYS", t[2])
+
+  def p_expression_unop_s_prev(self, t):
+      '''expression : S_PREV expression'''
+      t[0] = ("S_PREV", t[2])
+
+  def p_expression_unop_w_prev(self, t):
+      '''expression : W_PREV expression'''
+      t[0] = ("W_PREV", t[2])
+
+  def p_expression_unop_s_next(self, t):
+      '''expression : S_NEXT expression'''
+      t[0] = ("S_NEXT", t[2])
+
+  def p_expression_unop_w_next(self, t):
+      '''expression : W_NEXT expression'''
+      t[0] = ("W_NEXT", t[2])
+
+  def p_expression_unop_once(self, t):
+      '''expression : ONCE expression'''
+      t[0] = ("ONCE", t[2])
+
+  def p_expression_unop_hist(self, t):
+      '''expression : HIST expression'''
+      t[0] = ("HIST", t[2])
+
+  ######### BINARY OPs #########
+  def p_expression_binop_or(self, t):
+      '''expression : expression OR expression'''
+      if isinstance(t[1], int) and isinstance(t[3], int):
+        t[0] = t[1] or t[3]
+      else:
+        t[0] = ("OR", t[1], t[3])
+
+  def p_expression_binop_and(self, t):
+      '''expression : expression AND expression'''
+      if isinstance(t[1], int) and isinstance(t[3], int):
+        t[0] = t[1] and t[3]
+      else:
+        t[0] = ("AND", t[1], t[3])
+
+  def p_expression_binop_imp(self, t):
+      '''expression : expression IMP expression'''
+      if isinstance(t[1], int) and isinstance(t[3], int):
+        t[0] = not t[1] or t[3]
+      else:
+        t[0] = ("IMP", t[1], t[3])
+
+  def p_expression_binop_since(self, t):
+      '''expression : expression SINCE expression'''
+      t[0] = ("SINCE", t[1], t[3])
+
+  def p_expression_binop_until(self, t):
+      '''expression : expression UNTIL expression'''
+      t[0] = ("UNTIL", t[1], t[3])
