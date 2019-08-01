@@ -5,9 +5,8 @@ from collections import Iterable
 
 class lexer(object):
   # global tokens
-
   tokens = (
-      'NUMBER', 'SYM', # 0 INPUTS
+      'BOOL', 'SYM', # 0 INPUTS
       'NOT','S_PREV','W_PREV','S_NEXT','W_NEXT','ONCE','HIST','EVENTUALLY','ALWAYS', # 1 INPUTS
       'OR','AND','IMP','SINCE','UNTIL', # 2 INPUTS
       )
@@ -83,15 +82,14 @@ class lexer(object):
 
   literals = ['(', ')']
 
-  def t_NUMBER(self, t):
-      r'\d+'
-      try:
-          t.value = int(t.value)
-      except ValueError:
-          print("Integer value too large %d", t.value)
-          t.value = 0
-      except Error as e:
-          print(e)
+  def t_BOOL(self, t):
+      r'0|1|true|false'
+      if len(t.value) == 1:
+        try:
+            t.value = int(t.value)
+            t.value = bool(t.value)
+        except ValueError as e:
+            raise Exception("Not a boolean value: %s" % t.value, e)
       return t
 
   # Ignored characters
@@ -208,8 +206,8 @@ class ltl_parser(object):
       t[0] = t[2]
       print("(((())))")
 
-  def p_expression_number(self, t):
-      'expression : NUMBER'
+  def p_expression_bool(self, t):
+      'expression : BOOL'
       t[0] = t[1]
 
   def p_expression_sym(self, t):
