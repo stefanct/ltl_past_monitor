@@ -223,4 +223,9 @@ class ltl_parser(object):
           print("Unknown error in sym lookup: %s" % (e))
 
   def p_error(self, t):
-      print("Syntax error at '%s'" % t.value)
+      s=""
+      if t == None:
+        s = 'Unexpected end of input. Probably unbalanced parentheses.'
+      else:
+        s = "Syntax error at line %d: '%s'" % (t.lineno, t.value)
+      raise Exception("Parser error: %s" % s)
