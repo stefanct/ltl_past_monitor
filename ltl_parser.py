@@ -7,7 +7,7 @@ from collections import Iterable
 class lexer(object):
   # global tokens
   tokens = (
-      'BOOL', 'SYM', # 0 INPUTS
+      'BOOL', 'SYM', 'NEWLINE', # 0 INPUTS
       'NOT','S_PREV','W_PREV','S_NEXT','W_NEXT','ONCE','HIST','EVENTUALLY','ALWAYS', # 1 INPUTS
       'OR','AND','IMP','SINCE','UNTIL', # 2 INPUTS
       )
@@ -97,10 +97,11 @@ class lexer(object):
   # Ignored characters
   t_ignore = " \t"
 
-  def t_newline(self, t):
+  def t_NEWLINE(self, t):
       r'\n+'
       t.lexer.lineno += t.value.count("\n")
-      
+      return t
+
   def t_error(self, t):
       print("Illegal character '%s'" % t.value[0])
       t.lexer.skip(1)
@@ -116,6 +117,7 @@ class ltl_parser(object):
   start = 'formula' # Make sure we use the right rule as root of the grammar
   tokens = lexer.tokens
   precedence = (
+    ('left', 'NEWLINE'),
     ('right','NOT','S_PREV','W_PREV','S_NEXT','W_NEXT','ONCE','HIST','EVENTUALLY','ALWAYS'),
     ('left','OR','AND','IMP','SINCE','UNTIL'),
   )
@@ -138,6 +140,15 @@ class ltl_parser(object):
   # Print the tree in Polish notation in one line w/o a newline at the end
   def print_tree_oneline(self, tree):
     if isinstance(tree, Iterable):
+      # Test for forest instead of tree and print individual trees separately
+      if tree[0] == '\n':
+        for c in tree[1:-1]:
+          self.print_tree_oneline(c)
+          vprintn(", ")
+        else:
+          self.print_tree_oneline(tree[-1])
+        return
+
       vprintn(tree[0])
       if len(tree) > 1:
         vprintn("(")
@@ -152,6 +163,13 @@ class ltl_parser(object):
 
   def print_tree(self, tree, cur_indent=0, indent_guides=False):
     _INDENT = 4
+    # Test for forest instead of tree and print individual trees separately
+    if isinstance(tree, Iterable) and tree[0] == '\n':
+      for c in tree[1:]:
+        self.print_tree(c, cur_indent, indent_guides)
+        vprint()
+      return
+
     for _ in range(1, (cur_indent) // _INDENT):
       if indent_guides:
         # FIXME: we need to check if the respective level is done already
@@ -184,13 +202,28 @@ class ltl_parser(object):
       raise Exception("Parser error: %s" % s)
 
   def p_formula(self, t):
-      '''formula : start expression '''
+      '''formula : start exlist'''
       vvprint("Finished parsing")
       t[0] = t[2]
 
   def p_start(self, t):
       '''start :'''
       vvprint("Starting parsing")
+
+  ## Expression lists + newlines
+  def p_exlist_nl_exl(self, t):
+      '''exlist : NEWLINE exlist'''
+      t[0] = t[2]
+
+  def p_exlist_exl_nl_exl(self, t):
+      '''exlist : exlist NEWLINE exlist'''
+      t[0] = ('\n', t[1], t[3])
+
+  def p_exlist(self, t):
+      '''exlist : expression
+                | exlist NEWLINE
+      '''
+      t[0] = t[1]
 
   ######### NULLARY OPs #########
   def p_expression_group(self, t):
