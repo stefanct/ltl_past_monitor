@@ -14,17 +14,6 @@ from debug import *
 WARN = '\033[33m'
 ENDC = '\033[0m'
 
-# Based on https://realpython.com/python-csv/#reading-csv-files-into-a-dictionary-with-csv
-def parse_csv(path):
-  with open(path, mode='r', newline='') as csv_file:
-    csv_reader = csv.DictReader(csv_file, skipinitialspace=True)
-    # line_count = 0
-    vprint('Variables names are %s' % ", ".join(csv_reader.fieldnames))
-    for row in csv_reader:
-      vvprint('%s' % ", ".join(filter(None, row.values())))
-    vprint("Reading %d lines of %s completed" % (csv_reader.line_num, path))
-    return csv_reader
-
 def parse_ltl(path, variables, debug):
   p = ltl_parser(debug)
   p.set_variables(variables)
@@ -61,5 +50,6 @@ if __name__ == "__main__":
   
   set_verbosity(verbose)
 
-  csv = parse_csv(args.csv_file)
-  parse_ltl(args.ltl_file, csv.fieldnames, args.debug)
+  with open(args.csv_file, mode='r', newline='') as csv_file:
+    csv_reader = csv.DictReader(csv_file, skipinitialspace=True)
+    parse_ltl(args.ltl_file, csv_reader.fieldnames, args.debug)
