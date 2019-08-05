@@ -4,7 +4,7 @@ import re
 from debug import *
 from collections import Iterable
 
-class lexer(object):
+class _lexer(object):
   # global tokens
   tokens = (
       'BOOL', 'SYM', 'NEWLINE', # 0 INPUTS
@@ -115,7 +115,7 @@ class lexer(object):
 # YACC rules
 class ltl_parser(object):
   start = 'formula' # Make sure we use the right rule as root of the grammar
-  tokens = lexer.tokens
+  tokens = _lexer.tokens
   precedence = (
     ('left', 'NEWLINE'),
     ('right','NOT','S_PREV','W_PREV','S_NEXT','W_NEXT','ONCE','HIST','EVENTUALLY','ALWAYS'),
@@ -130,7 +130,7 @@ class ltl_parser(object):
 
   def __init__(self, debug, **kwargs):
     import ply.yacc as yacc
-    self.lexer = lexer(debug=debug)
+    self.lexer = _lexer(debug=debug)
     self.parser = yacc.yacc(module=self, write_tables=debug, debug=debug)
 
   def set_variables(self, variables):
