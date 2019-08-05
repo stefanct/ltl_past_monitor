@@ -9,10 +9,8 @@ import sys
 import argparse
 import csv
 import ltl_parser
+import ltlpast
 from debug import *
-
-WARN = '\033[33m'
-ENDC = '\033[0m'
 
 def parse_ltl(path, variables, debug):
   p = ltl_parser.parser(debug)
@@ -30,6 +28,9 @@ def parse_ltl(path, variables, debug):
   vprintn("Line: ")
   ltl_parser.print_tree_oneline(ltl_ast)
   print()
+  terms = []
+  ltl_parser.get_terms(ltl_ast, terms)
+  return terms
 
 if __name__ == "__main__":
   import locale
@@ -52,4 +53,13 @@ if __name__ == "__main__":
 
   with open(args.csv_file, mode='r', newline='') as csv_file:
     csv_reader = csv.DictReader(csv_file, skipinitialspace=True)
-    parse_ltl(args.ltl_file, csv_reader.fieldnames, args.debug)
+    atoms = csv_reader.fieldnames
+
+    terms = parse_ltl(args.ltl_file, atoms, args.debug)
+    solve = ltlpast.generate_solver(terms, atoms)
+    ret = solve(csv_reader, len(terms))
+
+  if (ret == 1):
+    print("Fail")
+  else:
+    print("Pass")
