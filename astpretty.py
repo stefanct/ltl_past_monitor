@@ -47,7 +47,7 @@ def _fields(n, show_offsets=True):
 def _leaf(node, show_offsets=True):
     if isinstance(node, AST):
         return '{}({})'.format(
-            type(node).__name__,
+            'ast.' + type(node).__name__,
             ', '.join(
                 '{}={}'.format(
                     field,
@@ -90,7 +90,7 @@ def pformat(node, indent='    ', show_offsets=True, _indent=0):
                 _indent=_indent,
             )
 
-        out = type(node).__name__ + '(\n'
+        out = 'ast.' + type(node).__name__ + '(\n'
         with indented():
             for field in _fields(node, show_offsets=show_offsets):
                 attr = getattr(node, field)
