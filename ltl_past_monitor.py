@@ -8,27 +8,27 @@ import datetime
 import sys
 import argparse
 import csv
-from ltl_parser import ltl_parser
+import ltl_parser
 from debug import *
 
 WARN = '\033[33m'
 ENDC = '\033[0m'
 
 def parse_ltl(path, variables, debug):
-  p = ltl_parser(debug)
+  p = ltl_parser.parser(debug)
   p.set_variables(variables)
   try:
     with open(path, mode='r', newline=None) as ltl_file:
       text = ltl_file.read()
-    tree = p.parser.parse(text)
+    ltl_ast = p.parser.parse(text)
   except Exception as e:
     print("%s Exiting." % e.args[0])
     exit(1)
 
   vprint("Tree:")
-  p.print_tree(tree)
+  ltl_parser.print_tree(ltl_ast, indent_guides=True)
   vprintn("Line: ")
-  p.print_tree_oneline(tree)
+  ltl_parser.print_tree_oneline(ltl_ast)
   print()
 
 if __name__ == "__main__":
