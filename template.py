@@ -1,6 +1,6 @@
-def solve(trace, clause_cnt):
-  pre = [None]*clause_cnt
-  now = [None]*clause_cnt
+def solve(trace, term_cnt):
+  pre = [None]*term_cnt
+  now = [None]*term_cnt
 
   # Initialization
   state = trace.pop(0)
