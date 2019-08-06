@@ -3,17 +3,106 @@ import pathlib
 from debug import *
 
 init_dict = {
-  # $atom: pre[i] = state['$atom']
+  # $atom: target[i] = state['atom']
   'atom': lambda target, i, atom:
     ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
                value=ast.Subscript(value=ast.Name(id='state', ctx=ast.Load()), slice=ast.Index(value=ast.Str(s=atom)), ctx=ast.Load())
+    ),
+  ###################################################################################################
+  # Unary operators ('NOT','S_PREV','W_PREV','S_NEXT','W_NEXT','ONCE','HIST','EVENTUALLY','ALWAYS') #
+  # To initialize pre[i] we simply need to take into account pre[args[0]] (args[1] is ignored)      #
+  ###################################################################################################
+  # NOT: "target[i] = not target[args[0]]"
+  'NOT': lambda target, i, args:
+    ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
+                value=ast.UnaryOp(
+                  op=ast.Not(),
+                  operand=ast.Subscript(
+                      value=ast.Name(id=target, ctx=ast.Load()),
+                      slice=ast.Index(value=ast.Num(n=args[0]),),
+                      ctx=ast.Load(),
+                  ),
+                ),
+    ),
+
+  #######################################################
+  # Binary operators ('OR','AND','IMP','SINCE','UNTIL') #
+  #######################################################
+  # Binops need a bit more context to gather their inputs.
+  # This needs to be done at build-time so this becomes relatively easy again:
+  # We assume here to simply get the two respective indices as inputs.
+  
+  # $a OR $b: "target[i] = target[a] or target[b]"
+  'OR': lambda target, i, args:
+    ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
+                value=ast.BoolOp(
+                  op=ast.Or(),
+                  values=[
+                    ast.Subscript(
+                      value=ast.Name(id=target, ctx=ast.Load()),
+                      slice=ast.Index(value=ast.Num(n=args[0]),),
+                      ctx=ast.Load(),
+                    ),
+                    ast.Subscript(
+                      value=ast.Name(id=target, ctx=ast.Load()),
+                      slice=ast.Index(value=ast.Num(n=args[1]),),
+                      ctx=ast.Load(),
+                    ),
+                  ],
+                ),
+    ),
+
+  # $a AND $b: "target[i] = target[a] and target[b]"
+  'AND': lambda target, i, args:
+    ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
+                value=ast.BoolOp(
+                  op=ast.And(),
+                  values=[
+                    ast.Subscript(
+                      value=ast.Name(id=target, ctx=ast.Load()),
+                      slice=ast.Index(value=ast.Num(n=args[0]),),
+                      ctx=ast.Load(),
+                    ),
+                    ast.Subscript(
+                      value=ast.Name(id=target, ctx=ast.Load()),
+                      slice=ast.Index(value=ast.Num(n=args[1]),),
+                      ctx=ast.Load(),
+                    ),
+                  ],
+                ),
+    ),
+
+  # $a IMP $b: "target[i] = (not target[a]) or target[b]"
+  'IMP': lambda target, i, args:
+    ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
+                value=ast.BoolOp(
+                  op=ast.Or(),
+                  values=[
+                    ast.UnaryOp(
+                      op=ast.Not(),
+                      operand=ast.Subscript(
+                        value=ast.Name(id=target, ctx=ast.Load()),
+                        slice=ast.Index(value=ast.Num(n=args[0]),),
+                        ctx=ast.Load(),
+                      ),
+                    ),
+                    ast.Subscript(
+                      value=ast.Name(id=target, ctx=ast.Load()),
+                      slice=ast.Index(value=ast.Num(n=args[1]),),
+                      ctx=ast.Load(),
+                    ),
+                  ],
+                ),
     ),
 }
 
 
 loop_dict = {
-  # $atom: now[i] = state['$atom']
   'atom': init_dict['atom'],
+  'NOT': init_dict['NOT'],
+  'AND': init_dict['AND'],
+  'OR': init_dict['OR'],
+  'IMP': init_dict['IMP'],
 }
 
 def generate_solver(terms, atoms):
