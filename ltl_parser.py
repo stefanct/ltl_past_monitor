@@ -166,14 +166,30 @@ def print_tree(tree, cur_indent=0, indent_guides=False):
   else:
     vprint(tree)
 
-def get_terms(ltl_ast, terms):
-  if isinstance(ltl_ast, Iterable):
-    terms.append(ltl_ast)
-    for c in ltl_ast[1:]:
-      get_terms(c, terms)
-  elif ltl_ast != None:
-    terms.append(ltl_ast)
-
+# Create a list of terms encountered when stepping through the AST.
+# Additionally, for each term the number of subelements contained in its
+# first branch is stored. This allows to directly infer the index of
+# the second argument to a binary function (the first argument always
+# follows immediately after the operation in the list).
+#
+# NB: The return value is only valid if terms is not given explicitly.
+# In other cases it is to be used in recursive fashion internally.
+def get_terms(ltl_ast, terms=None, cnt=0):
+  ret_terms = False
+  if terms == None:
+    terms = []
+    ret_terms = True
+  cur = [ltl_ast, 1]
+  cnt += 1
+  terms.append(cur)
+  children = len(ltl_ast)-1
+  if children > 0:
+    cnts = [0]*children
+    for i, c in enumerate(ltl_ast[1:]):
+      cnts[i] = get_terms(c, terms, 0)
+      cnt += cnts[i]
+    cur[1] = cnts[0]
+  return terms if ret_terms else cnt
 
 # YACC rules
 class parser(object):

@@ -28,9 +28,7 @@ def parse_ltl(path, variables, debug):
   vprintn("Line: ")
   ltl_parser.print_tree_oneline(ltl_ast)
   print()
-  terms = []
-  ltl_parser.get_terms(ltl_ast, terms)
-  return terms
+  return ltl_parser.get_terms(ltl_ast)
 
 if __name__ == "__main__":
   import locale

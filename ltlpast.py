@@ -42,12 +42,14 @@ class transformer(ast.NodeTransformer):
 
   def template_modifier(self, op_dict, target, node):
     nodes = []
-    for i, t in enumerate(reversed(self.terms)):
+    for i, tt in enumerate(reversed(self.terms)):
+      # tt[0] is the actual term while
+      # tt[1] the offset of the second argument (if any)
+      t = tt[0]
       newnode = None
       term_idx = self.term_cnt-1-i
-      vprint("terms[%d]: %s (%s)" % (i, type(t), t))
       if isinstance(t, str):
-        vvprint("Setting %s[%d] by assigning the state of %s via %s" % (target, term_idx, t, op_dict['atom']))
+        vprint("%s[%d] = state[%s]" % (target, term_idx, t))
         newnode = op_dict['atom'](target, term_idx, t)
       elif isinstance(t, tuple):
         op = t[0]
@@ -57,9 +59,10 @@ class transformer(ast.NodeTransformer):
           print("FIXME: Unknown operation '%s'" % (op))
           continue
 
-        vprint("OP = %s -> %s[%d] = %s (%d params)" % (op, target, term_idx, assign, len(t)-1))
-        args = [0, 1] # FIXME: derive correct indices of input terms
-        newnode = assign(target, i, args)
+        a = term_idx + 1
+        b = term_idx + 1 + tt[1]
+        vprint("%s[%d] = %s(..., %s[%d], %s[%d])" % (target, term_idx, op, target, a, target, b))
+        newnode = assign(target, term_idx, [a, b])
       else:
         raise Exception("Unknown term type at %d: %s (%s)" % (i, type(t), t))
 
