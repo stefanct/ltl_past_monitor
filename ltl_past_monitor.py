@@ -34,8 +34,6 @@ if __name__ == "__main__":
   import locale
   locale.setlocale(locale.LC_ALL, '') # do not ignore locale settings of the environment. yes, python needs to be told this m(
 
-  global verbose
-
   # Argument parsing
   argparser = argparse.ArgumentParser(description='LTL+past offline verifier.')
   argparser.add_argument('ltl_file', action='store', help=('Path to the file containing the LTL+past specifications'))
@@ -45,9 +43,7 @@ if __name__ == "__main__":
 
   args = argparser.parse_args()
 
-  verbose = args.verbose
-  
-  set_verbosity(verbose)
+  set_verbosity(args.verbose)
 
   with open(args.csv_file, mode='r', newline='') as csv_file:
     csv_reader = csv.DictReader(csv_file, skipinitialspace=True)
