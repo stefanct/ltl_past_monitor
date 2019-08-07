@@ -20,6 +20,9 @@ def verify_csv(path, ltl_file, debug=False):
     csv_reader = csv.DictReader(csv_file, skipinitialspace=True)
     atoms = csv_reader.fieldnames
 
+    if (atoms == None):
+      raise SyntaxError("Could not parse variable names in CSV file (%s)" % path.name)
+
     terms = parse_ltl(ltl_file, atoms, debug)
     solve = ltlpast.generate_solver(terms, atoms)
     return solve(csv_reader, len(terms))
