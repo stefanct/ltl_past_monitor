@@ -7,10 +7,22 @@ import glob
 import datetime
 import sys
 import argparse
+import pathlib
 import csv
 import ltl_parser
 import ltlpast
 from debug import *
+
+def verify_csv(path, ltl_file, debug=False):
+  if isinstance(path, str):
+    path = pathlib.Path(path)
+  with path.open(mode='r', newline='') as csv_file:
+    csv_reader = csv.DictReader(csv_file, skipinitialspace=True)
+    atoms = csv_reader.fieldnames
+
+    terms = parse_ltl(ltl_file, atoms, debug)
+    solve = ltlpast.generate_solver(terms, atoms)
+    return solve(csv_reader, len(terms))
 
 def parse_ltl(path, variables, debug):
   p = ltl_parser.parser(debug)
@@ -45,15 +57,14 @@ if __name__ == "__main__":
 
   set_verbosity(args.verbose)
 
-  with open(args.csv_file, mode='r', newline='') as csv_file:
-    csv_reader = csv.DictReader(csv_file, skipinitialspace=True)
-    atoms = csv_reader.fieldnames
-
-    terms = parse_ltl(args.ltl_file, atoms, args.debug)
-    solve = ltlpast.generate_solver(terms, atoms)
-    ret = solve(csv_reader, len(terms))
+  try:
+    ret = verify_csv(args.csv_file, args.ltl_file, args.debug)
+  except Exception as e:
+    print("%s Exiting." % e)
+    exit(2)
 
   if (ret == 1):
     print("Fail")
   else:
     print("Pass")
+  exit(ret)
