@@ -30,14 +30,11 @@ def verify_csv(path, ltl_file, debug=False):
 def parse_ltl(path, variables, debug):
   p = ltl_parser.parser(debug)
   p.set_variables(variables)
-  try:
-    with open(path, mode='r', newline=None) as ltl_file:
-      text = ltl_file.read()
-    ltl_ast = p.parser.parse(text)
-  except Exception as e:
-    print("%s Exiting." % e.args[0])
-    exit(1)
-
+  if isinstance(path, str):
+    path = pathlib.Path(path)
+  with path.open(mode='r', newline=None) as ltl_file:
+    text = ltl_file.read()
+  ltl_ast = p.parser.parse(text)
   vprint("Tree:")
   ltl_parser.print_tree(ltl_ast, indent_guides=True)
   vprintn("Line: ")
