@@ -91,7 +91,7 @@ class _lexer(object):
             t.value = int(t.value)
             t.value = bool(t.value)
         except ValueError as e:
-            raise Exception("Not a boolean value: %s" % t.value, e)
+            raise SyntaxError("Not a boolean value: %s" % t.value, e)
       return t
 
   # Ignored characters
@@ -182,13 +182,14 @@ def get_terms(ltl_ast, terms=None, cnt=0):
   cur = [ltl_ast, 1]
   cnt += 1
   terms.append(cur)
-  children = len(ltl_ast)-1
-  if children > 0:
-    cnts = [0]*children
-    for i, c in enumerate(ltl_ast[1:]):
-      cnts[i] = get_terms(c, terms, 0)
-      cnt += cnts[i]
-    cur[1] = cnts[0]
+  if not isinstance(ltl_ast, bool):
+    children = len(ltl_ast)-1
+    if children > 0:
+      cnts = [0]*children
+      for i, c in enumerate(ltl_ast[1:]):
+        cnts[i] = get_terms(c, terms, 0)
+        cnt += cnts[i]
+      cur[1] = cnts[0]
   return terms if ret_terms else cnt
 
 # YACC rules
