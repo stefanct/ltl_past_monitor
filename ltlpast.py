@@ -3,6 +3,15 @@ import pathlib
 from debug import *
 
 init_dict = {
+  ###################################################################################################
+  # Nullary operators (atoms, truth values)                                                         #
+  ###################################################################################################
+  # boolean: target[i] = b
+  'bool': lambda target, i, b:
+    ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
+               value=ast.NameConstant(value=b),
+    ),
+
   # $atom: target[i] = state['atom']
   'atom': lambda target, i, atom:
     ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
@@ -98,6 +107,7 @@ init_dict = {
 
 
 loop_dict = {
+  'bool': init_dict['bool'],
   'atom': init_dict['atom'],
   'NOT': init_dict['NOT'],
   'AND': init_dict['AND'],
@@ -152,6 +162,9 @@ class transformer(ast.NodeTransformer):
         b = term_idx + 1 + tt[1]
         vprint("%s[%d] = %s(..., %s[%d], %s[%d])" % (target, term_idx, op, target, a, target, b))
         newnode = assign(target, term_idx, [a, b])
+      elif isinstance(t, bool):
+        vprint("%s[%d] = %s" % (target, term_idx, str(t)))
+        newnode = op_dict['bool'](target, term_idx, t)
       else:
         raise Exception("Unknown term type at %d: %s (%s)" % (i, type(t), t))
 
