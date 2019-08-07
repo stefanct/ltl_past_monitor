@@ -23,6 +23,9 @@ def solve(trace, term_cnt):
   # The next statement will be replaced by expressions to initialize pre
   template_init="template_init"
 
+  if not pre[0]:
+    return 1 # Fail immediately if we start in a bad state
+
   # Event interpretation loop
   for i, state in enumerate(trace, start=1):
     normalize_state(state)
@@ -32,7 +35,7 @@ def solve(trace, term_cnt):
     template_loop="template_loop"
 
     if now[0] == 0:
-      return 1 # Fail immediately
+      return 1 # Fail immediately w/o taking further states into account
 
     pre = now
   return 0
