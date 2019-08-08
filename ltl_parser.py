@@ -118,7 +118,7 @@ def print_tree_oneline(tree):
     if tree[0] == '\n':
       for c in tree[1:-1]:
         print_tree_oneline(c)
-        vprintn(", ")
+        vprint()
       else:
         print_tree_oneline(tree[-1])
       return
@@ -139,9 +139,10 @@ def print_tree(tree, cur_indent=0, indent_guides=False):
   _INDENT = 4
   # Test for forest instead of tree and print individual trees separately
   if isinstance(tree, Iterable) and tree[0] == '\n':
-    for c in tree[1:]:
+    for c in tree[1:-1]:
       print_tree(c, cur_indent, indent_guides)
       vprint()
+    print_tree(tree[-1], cur_indent, indent_guides)
     return
 
   for _ in range(1, (cur_indent) // _INDENT):

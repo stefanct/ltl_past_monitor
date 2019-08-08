@@ -25,6 +25,7 @@ def verify_csv(path, ltl_file, debug=False):
 
     terms = parse_ltl(ltl_file, atoms, debug)
     solve = ltlpast.generate_solver(terms, atoms)
+    vprint("\nRunning verifier...")
     return solve(csv_reader, len(terms))
 
 def parse_ltl(path, variables, debug):
@@ -35,11 +36,11 @@ def parse_ltl(path, variables, debug):
   with path.open(mode='r', newline=None) as ltl_file:
     text = ltl_file.read()
   ltl_ast = p.parser.parse(text)
-  vprint("Tree:")
+  vprint("\nLTL Tree:")
   ltl_parser.print_tree(ltl_ast, indent_guides=True)
-  vprintn("Line: ")
+  vprintn("\nLTL Line:")
   ltl_parser.print_tree_oneline(ltl_ast)
-  print()
+  vprint()
   return ltl_parser.get_terms(ltl_ast)
 
 if __name__ == "__main__":
