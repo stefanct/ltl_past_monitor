@@ -1,4 +1,3 @@
-import distutils.util
 from debug import *
 
 # vprint all variable assignments of the given state
@@ -6,18 +5,12 @@ def print_state(i, state):
   stmts = map(lambda k: k+'='+str(state[k]), state.keys())
   vprint("state[%d]: %s" % (i, ', '.join(stmts)))
 
-# Convert a state tuple to boolean values
-def normalize_state(state):
-  for k,s in state.items():
-    state[k] = distutils.util.strtobool(state[k])
-
 def solve(trace, term_cnt):
   pre = [None]*term_cnt
   now = [None]*term_cnt
 
   # Initialization
   state = next(trace)
-  normalize_state(state)
   print_state(0, state)
 
   # The next statement will be replaced by expressions to initialize pre
@@ -28,7 +21,6 @@ def solve(trace, term_cnt):
 
   # Event interpretation loop
   for i, state in enumerate(trace, start=1):
-    normalize_state(state)
     print_state(i, state)
 
     # The next statement will be replaced by expressions to update now according to state

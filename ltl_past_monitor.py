@@ -9,6 +9,7 @@ import sys
 import argparse
 import pathlib
 import csv
+import distutils.util
 import ltl_parser
 import ltlpast
 from debug import *
@@ -16,17 +17,26 @@ from debug import *
 def verify_csv(path, ltl_file, debug=False):
   if isinstance(path, str):
     path = pathlib.Path(path)
+
+  states = None
   with path.open(mode='r', newline='') as csv_file:
     csv_reader = csv.DictReader(csv_file, skipinitialspace=True)
     atoms = csv_reader.fieldnames
-
     if (atoms == None):
       raise SyntaxError("Could not parse variable names in CSV file (%s)" % path.name)
 
-    terms = parse_ltl(ltl_file, atoms, debug)
-    solve = ltlpast.generate_solver(terms, atoms)
-    vprint("\nRunning verifier...")
-    return solve(csv_reader, len(terms))
+    states = list(csv_reader) # Slurp the CSV file
+
+  # Convert state tuples from strings to boolean values
+  for s in states:
+    for k in s.keys():
+      s[k] = distutils.util.strtobool(s[k])
+
+  terms = parse_ltl(ltl_file, atoms, debug)
+  solve = ltlpast.generate_solver(terms, atoms)
+  vprint("\nRunning verifier...")
+  return solve(iter(states), len(terms))
+
 
 def parse_ltl(path, variables, debug):
   p = ltl_parser.parser(debug)
