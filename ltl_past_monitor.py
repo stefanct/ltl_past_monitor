@@ -64,7 +64,7 @@ if __name__ == "__main__":
     print("%s Exiting." % e)
     exit(2)
 
-  if (ret == 1):
+  if (ret != 0):
     print("Fail")
   else:
     print("Pass")

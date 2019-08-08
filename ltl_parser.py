@@ -225,7 +225,7 @@ class parser(object):
         s = 'Unexpected end of input. Probably unbalanced parentheses.'
       else:
         s = "Syntax error at line %d: '%s'" % (t.lineno, t.value)
-      raise Exception("Parser error: %s" % s)
+      raise SyntaxError("Parser error: %s" % s)
 
   def p_formula(self, t):
       '''formula : start exlist'''
@@ -263,7 +263,7 @@ class parser(object):
   def p_expression_sym(self, t):
       '''expression : SYM'''
       if not t[1] in self.syms:
-        raise LookupError("Symbol found in formula that is not contained in trace: '%s'" % t[1])
+        raise SyntaxError("Symbol found in formula that is not contained in trace: '%s'" % t[1])
       val = self.syms[t[1]]
       if (val == -1):
         val = self.sym_nxt
