@@ -178,7 +178,7 @@ class transformer(ast.NodeTransformer):
     target = node.targets[0]
 
     if (isinstance(target, ast.Name) and target.id =='template_init' and node.value.s == 'template_init'):
-      vprint("\nGenerating initialization")
+      vprint("Generating initialization")
       return self.template_modifier(init_dict, 'pre', node)
 
     if (isinstance(target, ast.Name) and target.id =='template_loop' and node.value.s == 'template_loop'):

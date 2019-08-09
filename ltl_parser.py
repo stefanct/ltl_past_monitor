@@ -104,25 +104,21 @@ class _lexer(object):
 
   def t_error(self, t):
       print("Illegal character '%s'" % t.value[0])
-      t.lexer.skip(1)
+      t.lexer.skip(1) # Try continuing with the next one
       
 
 
 
 
 
+def print_forest_oneline(tree):
+  for c in tree:
+    print_tree_oneline(c)
+    vprint()
+
 # Print the tree in Polish notation in one line w/o a newline at the end
 def print_tree_oneline(tree):
   if isinstance(tree, Iterable):
-    # Test for forest instead of tree and print individual trees separately
-    if tree[0] == '\n':
-      for c in tree[1:-1]:
-        print_tree_oneline(c)
-        vprint()
-      else:
-        print_tree_oneline(tree[-1])
-      return
-
     vprintn(tree[0])
     if len(tree) > 1:
       vprintn("(")
@@ -135,16 +131,14 @@ def print_tree_oneline(tree):
   else:
     vprintn(tree)
 
+def print_forest(tree, indent_guides=False):
+  for c in tree[:-1]:
+    print_tree(c, 0, indent_guides)
+    vprint()
+  print_tree(tree[-1], 0, indent_guides)
+
 def print_tree(tree, cur_indent=0, indent_guides=False):
   _INDENT = 4
-  # Test for forest instead of tree and print individual trees separately
-  if isinstance(tree, Iterable) and tree[0] == '\n':
-    for c in tree[1:-1]:
-      print_tree(c, cur_indent, indent_guides)
-      vprint()
-    print_tree(tree[-1], cur_indent, indent_guides)
-    return
-
   for _ in range(1, (cur_indent) // _INDENT):
     if indent_guides:
       # FIXME: we need to check if the respective level is done already
@@ -167,6 +161,13 @@ def print_tree(tree, cur_indent=0, indent_guides=False):
   else:
     vprint(tree)
 
+# Returns a list of list of terms
+def get_terms(ltl_asts):
+  lot = []
+  for a in ltl_asts:
+    lot.append(_get_terms(a))
+  return lot
+
 # Create a list of terms encountered when stepping through the AST.
 # Additionally, for each term the number of subelements contained in its
 # first branch is stored. This allows to directly infer the index of
@@ -175,7 +176,7 @@ def print_tree(tree, cur_indent=0, indent_guides=False):
 #
 # NB: The return value is only valid if terms is not given explicitly.
 # In other cases it is to be used in recursive fashion internally.
-def get_terms(ltl_ast, terms=None, cnt=0):
+def _get_terms(ltl_ast, terms=None, cnt=0):
   ret_terms = False
   if terms == None:
     terms = []
@@ -188,7 +189,7 @@ def get_terms(ltl_ast, terms=None, cnt=0):
     if children > 0:
       cnts = [0]*children
       for i, c in enumerate(ltl_ast[1:]):
-        cnts[i] = get_terms(c, terms, 0)
+        cnts[i] = _get_terms(c, terms, 0)
         cnt += cnts[i]
       cur[1] = cnts[0]
   return terms if ret_terms else cnt
@@ -228,28 +229,49 @@ class parser(object):
       raise SyntaxError("Parser error: %s" % s)
 
   def p_formula(self, t):
-      '''formula : start exlist'''
+      '''formula : start expressions'''
       vvprint("Finished parsing")
       t[0] = t[2]
 
   def p_start(self, t):
-      '''start :'''
-      vvprint("Starting parsing")
+      '''start : newlines
+               |
+      '''
+      vvprint("Starting parsing") # and trim leading newlines
 
-  ## Expression lists + newlines
-  def p_exlist_nl_exl(self, t):
-      '''exlist : NEWLINE exlist'''
-      t[0] = t[2]
-
-  def p_exlist_exl_nl_exl(self, t):
-      '''exlist : exlist NEWLINE exlist'''
-      t[0] = ('\n', t[1], t[3])
-
-  def p_exlist(self, t):
-      '''exlist : expression
-                | exlist NEWLINE
+  def p_expressions(self, t):
+      '''expressions : exlist
+                     | single_expression
       '''
       t[0] = t[1]
+      t[0].reverse() # Output them as found in the input
+
+  def p_single_expression(self, t):
+      '''single_expression : expression'''
+      t[0] = [t[1]]
+
+  def p_exlist(self, t):
+      '''exlist : exlist_iter
+                | exlist_end
+      '''
+      t[0] = t[1]
+
+  def p_exlist_iter(self, t):
+      '''exlist_iter : expression newlines exlist
+      '''
+      t[0] = t[3]
+      t[0].append(t[1])
+
+  def p_exlist_end(self, t):
+      '''exlist_end : expression newlines
+      '''
+      t[0] = [t[1]]
+
+  def p_newlines(self, t):
+      '''newlines : NEWLINE
+                  | newlines NEWLINE
+      '''
+      pass
 
   ######### NULLARY OPs #########
   def p_expression_group(self, t):
@@ -273,7 +295,7 @@ class parser(object):
       t[0] = t[1]
 
   ######### UNARY OPs #########
-  def p_expression_unop(self, t):
+  def p_expression_unop_not(self, t):
       '''expression : NOT expression'''
       if isinstance(t[2], bool):
         t[0] = not t[2]
