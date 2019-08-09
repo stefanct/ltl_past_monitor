@@ -10,6 +10,7 @@ import argparse
 import pathlib
 import csv
 import distutils.util
+import traceback
 import ltl_parser
 import ltlpast
 from debug import *
@@ -79,8 +80,11 @@ if __name__ == "__main__":
 
   try:
     ret = verify_csv(args.csv_file, args.ltl_file, args.debug)
-  except Exception as e:
-    print("%s Exiting." % e)
+  except SyntaxError as e:
+    print(e)
+    exit(2)
+  except Exception:
+    traceback.print_exc()
     exit(2)
 
   if (ret != 0):
