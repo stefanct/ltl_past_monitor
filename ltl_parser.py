@@ -194,6 +194,12 @@ def _get_terms(ltl_ast, terms=None, cnt=0):
       cur[1] = cnts[0]
   return terms if ret_terms else cnt
 
+# PLY does try too much recovery when raising an ordinary SyntaxError
+# within grammer productions. By throwing a different type errors are
+# escalated appropriately. Defining a dedicated eases their handling.
+class ForcedSyntaxError(Exception):
+  pass
+
 # YACC rules
 class parser(object):
   start = 'formula' # Make sure we use the right rule as root of the grammar
@@ -223,10 +229,10 @@ class parser(object):
   def p_error(self, t):
       s=""
       if t == None:
-        s = 'Unexpected end of input. Probably unbalanced parentheses.'
+        s = 'Unexpected end of input. Maybe there are unbalanced parentheses?'
       else:
-        s = "Syntax error at line %d: '%s'" % (t.lineno, t.value)
-      raise SyntaxError("Parser error: %s" % s)
+        s = "Syntax error at line %d near '%s'" % (t.lineno, t.value)
+      raise ForcedSyntaxError("LTL Parser error: %s" % s)
 
   def p_formula(self, t):
       '''formula : start expressions'''
@@ -285,7 +291,7 @@ class parser(object):
   def p_expression_sym(self, t):
       '''expression : SYM'''
       if not t[1] in self.syms:
-        raise SyntaxError("Symbol found in formula that is not contained in trace: '%s'" % t[1])
+        raise ForcedSyntaxError("Syntax error: symbol found in formula at line %d that is not contained in trace: '%s'" % (t.lexer.lineno, t[1]))
       val = self.syms[t[1]]
       if (val == -1):
         val = self.sym_nxt

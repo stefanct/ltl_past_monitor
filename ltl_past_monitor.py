@@ -67,7 +67,7 @@ def parse_ltl(path, variables, debug):
   vprint()
   return ltl_parser.get_terms(ltl_asts)
 
-if __name__ == "__main__":
+def main():
   import locale
   locale.setlocale(locale.LC_ALL, '') # do not ignore locale settings of the environment. yes, python needs to be told this m(
 
@@ -84,15 +84,18 @@ if __name__ == "__main__":
 
   try:
     ret = verify_csv(args.csv_file, args.ltl_file, args.debug)
-  except SyntaxError as e:
+  except (SyntaxError, ltl_parser.ForcedSyntaxError) as e:
     print(e)
-    exit(2)
+    return 2
   except Exception:
     traceback.print_exc()
-    exit(2)
+    return 2
 
   if (ret != 0):
     print("Fail")
   else:
     print("Pass")
-  exit(ret)
+  return ret
+  
+if __name__ == "__main__":
+  main()

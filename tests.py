@@ -3,6 +3,7 @@
 import pathlib
 import pytest
 import ltl_past_monitor
+import ltl_parser
 import debug
 
 csv_files = pathlib.Path(__file__).parent.glob('tests/*.csv')
@@ -27,7 +28,7 @@ def test_verify_csv(csv_file, pytestconfig):
   ret = 1
   try:
     ret = ltl_past_monitor.verify_csv(csv_file, ltl_file)
-  except SyntaxError as ex:
+  except (ltl_parser.ForcedSyntaxError,SyntaxError) as ex:
     assert(state == "SyntaxError")
   # else fail by passing it up automatically
 
