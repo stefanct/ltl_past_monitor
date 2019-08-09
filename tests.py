@@ -1,3 +1,5 @@
+#!/usr/bin/pytest-3
+
 import pathlib
 import pytest
 import ltl_past_monitor
