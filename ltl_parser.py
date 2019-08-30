@@ -1,6 +1,7 @@
 # based on PLY's calc.py
 
 import re
+import distutils.util
 from debug import *
 from collections import Iterable
 
@@ -75,6 +76,12 @@ class _lexer(object):
     r'(until)'
     return t
 
+  def t_BOOL(self, t):
+    r'0|1|true|false'
+    # NB: this should never throw ValueError due to the RE above
+    t.value = bool(distutils.util.strtobool(t.value))
+    return t
+
   # Identifiers
   t_SYM     = r'[a-zA-Z_][a-zA-Z0-9_]*'
 
@@ -83,16 +90,6 @@ class _lexer(object):
   # t_ignore_multi_comment = r'(/\*(.|\n)*?\*/)|(//.*)|([#].*)'
 
   literals = ['(', ')']
-
-  def t_BOOL(self, t):
-      r'0|1|true|false'
-      if len(t.value) == 1:
-        try:
-            t.value = int(t.value)
-            t.value = bool(t.value)
-        except ValueError as e:
-            raise SyntaxError("Not a boolean value: %s" % t.value, e)
-      return t
 
   # Ignored characters
   t_ignore = " \t"
