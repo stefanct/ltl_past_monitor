@@ -5,6 +5,9 @@ def print_state(i, state):
   stmts = map(lambda k: k+'='+str(state[k]), state.keys())
   vprint("state[%d]: %s" % (i, ', '.join(stmts)))
 
+# Tries to satisfy the formula it is built for with the given trace
+# The input trace needs to be an iterator pointing to the initial state
+# in form of a dictionary mapping variable names to their (boolean) value.
 def solve(trace, term_cnt):
   pre = [None]*term_cnt
   now = [None]*term_cnt
