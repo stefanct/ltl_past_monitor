@@ -132,6 +132,8 @@ class transformer(ast.NodeTransformer):
                 terms,
                 variables,
               ):
+    assert(terms != None and variables != None)
+
     self.variables = variables
 
     self.terms = terms
