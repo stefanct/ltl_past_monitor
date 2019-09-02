@@ -17,6 +17,16 @@ def prev(ignored, i, args):
     ),
   )
 
+# Simply set target[i] = a (target(args[0]))
+def init_target(target, i, args):
+  return ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
+    value=ast.Subscript(
+      value=ast.Name(id=target, ctx=ast.Load()),
+      slice=ast.Index(value=ast.Num(n=args[0]),),
+      ctx=ast.Load(),
+    ),
+  )
+
 
 ######################################
 # Hashmap of initialization routines #
@@ -59,25 +69,10 @@ init_dict = {
                value=ast.NameConstant(value=False),
     ),
 
-  # W_PREV: "target[i] = target[args[0]]" - This is actually the only difference to S_PREV
-  'W_PREV': lambda target, i, args:
-    ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
-      value=ast.Subscript(
-          value=ast.Name(id=target, ctx=ast.Load()),
-          slice=ast.Index(value=ast.Num(n=args[0]),),
-          ctx=ast.Load(),
-      ),
-    ),
-
+  # W_PREV: "target[i] = a" - This is actually the only difference to S_PREV
+  'W_PREV': init_target,
   # ONCE a: "target[i] = a"
-  'ONCE': lambda target, i, args:
-    ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
-      value=ast.Subscript(
-          value=ast.Name(id=target, ctx=ast.Load()),
-          slice=ast.Index(value=ast.Num(n=args[0]),),
-          ctx=ast.Load(),
-      ),
-    ),
+  'ONCE': init_target,
 
   #######################################################
   # Binary operators ('OR','AND','IMP','SINCE','UNTIL') #
