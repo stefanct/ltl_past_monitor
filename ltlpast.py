@@ -69,6 +69,16 @@ init_dict = {
       ),
     ),
 
+  # ONCE a: "target[i] = a"
+  'ONCE': lambda target, i, args:
+    ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
+      value=ast.Subscript(
+          value=ast.Name(id=target, ctx=ast.Load()),
+          slice=ast.Index(value=ast.Num(n=args[0]),),
+          ctx=ast.Load(),
+      ),
+    ),
+
   #######################################################
   # Binary operators ('OR','AND','IMP','SINCE','UNTIL') #
   #######################################################
@@ -189,6 +199,26 @@ loop_dict = {
                 ctx=ast.Load(),
               ),
             ],
+          ),
+        ],
+      ),
+    ),
+
+  # ONCE a: "target[i] = pre[i] or target[a]"
+  'ONCE': lambda target, i, args:
+    ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
+      value=ast.BoolOp(
+        op=ast.Or(),
+        values=[
+          ast.Subscript(
+            value=ast.Name(id="pre", ctx=ast.Load()),
+            slice=ast.Index(value=ast.Num(n=i),),
+            ctx=ast.Load(),
+          ),
+          ast.Subscript(
+            value=ast.Name(id=target, ctx=ast.Load()),
+            slice=ast.Index(value=ast.Num(n=args[0]),),
+            ctx=ast.Load(),
           ),
         ],
       ),
