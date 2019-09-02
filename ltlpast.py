@@ -2,6 +2,25 @@ import ast
 import pathlib
 from debug import *
 
+
+####################
+# Helper functions #
+####################
+
+# S_PREV, W_PREV a: "now[i] = pre[a]"
+def prev(ignored, i, args):
+  return ast.Assign(targets=[ast.Subscript(value=ast.Name(id="now", ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
+    value=ast.Subscript(
+      value=ast.Name(id="pre", ctx=ast.Load()),
+      slice=ast.Index(value=ast.Num(n=args[0]),),
+      ctx=ast.Load(),
+    ),
+  )
+
+
+######################################
+# Hashmap of initialization routines #
+######################################
 init_dict = {
   ###################################################################################################
   # Nullary operators (atoms, truth values)                                                         #
@@ -32,6 +51,22 @@ init_dict = {
                       ctx=ast.Load(),
                   ),
                 ),
+    ),
+
+  # S_PREV: "target[i] = 0"
+  'S_PREV': lambda target, i, args:
+    ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
+               value=ast.NameConstant(value=False),
+    ),
+
+  # W_PREV: "target[i] = target[args[0]]" - This is actually the only difference to S_PREV
+  'W_PREV': lambda target, i, args:
+    ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
+      value=ast.Subscript(
+          value=ast.Name(id=target, ctx=ast.Load()),
+          slice=ast.Index(value=ast.Num(n=args[0]),),
+          ctx=ast.Load(),
+      ),
     ),
 
   #######################################################
@@ -106,6 +141,9 @@ init_dict = {
 }
 
 
+###############################
+# Hashmap of loop assignments #
+###############################
 loop_dict = {
   'bool': init_dict['bool'],
   'atom': init_dict['atom'],
@@ -113,6 +151,9 @@ loop_dict = {
   'AND': init_dict['AND'],
   'OR': init_dict['OR'],
   'IMP': init_dict['IMP'],
+
+  'S_PREV': prev,
+  'W_PREV': prev,
 }
 
 def generate_solver(terms, atoms):
