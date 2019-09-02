@@ -138,8 +138,17 @@ init_dict = {
                   ],
                 ),
     ),
-}
 
+  # $a SINCE $b: "target[i] = target[b]"
+  'SINCE': lambda target, i, args:
+    ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
+      value=ast.Subscript(
+          value=ast.Name(id=target, ctx=ast.Load()),
+          slice=ast.Index(value=ast.Num(n=args[1]),),
+          ctx=ast.Load(),
+      ),
+    ),
+}
 
 ###############################
 # Hashmap of loop assignments #
@@ -154,6 +163,36 @@ loop_dict = {
 
   'S_PREV': prev,
   'W_PREV': prev,
+
+  # $a SINCE $b: "target[i] = target[b] or (target[a] and pre[i])"
+  'SINCE': lambda target, i, args:
+    ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
+      value=ast.BoolOp(
+        op=ast.Or(),
+        values=[
+          ast.Subscript(
+            value=ast.Name(id=target, ctx=ast.Load()),
+            slice=ast.Index(value=ast.Num(n=args[0])),
+            ctx=ast.Load(),
+          ),
+          ast.BoolOp(
+            op=ast.And(),
+            values=[
+              ast.Subscript(
+                value=ast.Name(id=target, ctx=ast.Load()),
+                slice=ast.Index(value=ast.Num(n=args[0]),),
+                ctx=ast.Load(),
+              ),
+              ast.Subscript(
+                value=ast.Name(id='pre', ctx=ast.Load()),
+                slice=ast.Index(value=ast.Num(n=i)),
+                ctx=ast.Load(),
+              ),
+            ],
+          ),
+        ],
+      ),
+    ),
 }
 
 def generate_solver(terms, atoms):
