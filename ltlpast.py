@@ -73,6 +73,8 @@ init_dict = {
   'W_PREV': init_target,
   # ONCE a: "target[i] = a"
   'ONCE': init_target,
+  # HIST a: "target[i] = a"
+  'HIST': init_target,
 
   #######################################################
   # Binary operators ('OR','AND','IMP','SINCE','UNTIL') #
@@ -204,6 +206,26 @@ loop_dict = {
     ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
       value=ast.BoolOp(
         op=ast.Or(),
+        values=[
+          ast.Subscript(
+            value=ast.Name(id="pre", ctx=ast.Load()),
+            slice=ast.Index(value=ast.Num(n=i),),
+            ctx=ast.Load(),
+          ),
+          ast.Subscript(
+            value=ast.Name(id=target, ctx=ast.Load()),
+            slice=ast.Index(value=ast.Num(n=args[0]),),
+            ctx=ast.Load(),
+          ),
+        ],
+      ),
+    ),
+    
+  # HIST a: "target[i] = pre[i] and target[a]"
+  'HIST': lambda target, i, args:
+    ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
+      value=ast.BoolOp(
+        op=ast.And(),
         values=[
           ast.Subscript(
             value=ast.Name(id="pre", ctx=ast.Load()),
