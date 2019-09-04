@@ -8,24 +8,20 @@ from debug import *
 ####################
 
 # S_PREV, W_PREV a: "now[i] = pre[a]"
-def prev(ignored, i, args):
-  return ast.Assign(targets=[ast.Subscript(value=ast.Name(id="now", ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
-    value=ast.Subscript(
+def prev(target, i, args):
+  return ast.Subscript(
       value=ast.Name(id="pre", ctx=ast.Load()),
       slice=ast.Index(value=ast.Num(n=args[0]),),
       ctx=ast.Load(),
-    ),
-  )
+    )
 
 # Simply set target[i] = a (target(args[0]))
 def init_target(target, i, args):
-  return ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
-    value=ast.Subscript(
+  return ast.Subscript(
       value=ast.Name(id=target, ctx=ast.Load()),
       slice=ast.Index(value=ast.Num(n=args[0]),),
       ctx=ast.Load(),
-    ),
-  )
+    )
 
 
 ######################################
@@ -37,37 +33,34 @@ init_dict = {
   ###################################################################################################
   # boolean: target[i] = b
   'bool': lambda target, i, b:
-    ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
-               value=ast.NameConstant(value=b),
-    ),
+    ast.NameConstant(value=b)
+  ,
 
   # $atom: target[i] = state['atom']
   'atom': lambda target, i, atom:
-    ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
-               value=ast.Subscript(value=ast.Name(id='state', ctx=ast.Load()), slice=ast.Index(value=ast.Str(s=atom)), ctx=ast.Load())
-    ),
+    ast.Subscript(value=ast.Name(id='state', ctx=ast.Load()), slice=ast.Index(value=ast.Str(s=atom)), ctx=ast.Load())
+  ,
+
   ###################################################################################################
   # Unary operators ('NOT','S_PREV','W_PREV','S_NEXT','W_NEXT','ONCE','HIST','EVENTUALLY','ALWAYS') #
   # To initialize pre[i] we simply need to take into account pre[args[0]] (args[1] is ignored)      #
   ###################################################################################################
   # NOT: "target[i] = not target[args[0]]"
   'NOT': lambda target, i, args:
-    ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
-                value=ast.UnaryOp(
+    ast.UnaryOp(
                   op=ast.Not(),
                   operand=ast.Subscript(
                       value=ast.Name(id=target, ctx=ast.Load()),
                       slice=ast.Index(value=ast.Num(n=args[0]),),
                       ctx=ast.Load(),
                   ),
-                ),
-    ),
+                )
+  ,
 
   # S_PREV: "target[i] = 0"
   'S_PREV': lambda target, i, args:
-    ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
-               value=ast.NameConstant(value=False),
-    ),
+    ast.NameConstant(value=False)
+  ,
 
   # W_PREV: "target[i] = a" - This is actually the only difference to S_PREV
   'W_PREV': init_target,
@@ -85,8 +78,7 @@ init_dict = {
   
   # $a OR $b: "target[i] = target[a] or target[b]"
   'OR': lambda target, i, args:
-    ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
-                value=ast.BoolOp(
+    ast.BoolOp(
                   op=ast.Or(),
                   values=[
                     ast.Subscript(
@@ -100,13 +92,12 @@ init_dict = {
                       ctx=ast.Load(),
                     ),
                   ],
-                ),
-    ),
+                )
+  ,
 
   # $a AND $b: "target[i] = target[a] and target[b]"
   'AND': lambda target, i, args:
-    ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
-                value=ast.BoolOp(
+    ast.BoolOp(
                   op=ast.And(),
                   values=[
                     ast.Subscript(
@@ -120,13 +111,12 @@ init_dict = {
                       ctx=ast.Load(),
                     ),
                   ],
-                ),
-    ),
+                )
+  ,
 
   # $a IMP $b: "target[i] = (not target[a]) or target[b]"
   'IMP': lambda target, i, args:
-    ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
-                value=ast.BoolOp(
+    ast.BoolOp(
                   op=ast.Or(),
                   values=[
                     ast.UnaryOp(
@@ -143,18 +133,17 @@ init_dict = {
                       ctx=ast.Load(),
                     ),
                   ],
-                ),
-    ),
+                )
+  ,
 
   # $a SINCE $b: "target[i] = target[b]"
   'SINCE': lambda target, i, args:
-    ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
-      value=ast.Subscript(
+    ast.Subscript(
           value=ast.Name(id=target, ctx=ast.Load()),
           slice=ast.Index(value=ast.Num(n=args[1]),),
           ctx=ast.Load(),
-      ),
-    ),
+      )
+  ,
 }
 
 ###############################
@@ -173,8 +162,7 @@ loop_dict = {
 
   # $a SINCE $b: "target[i] = target[b] or (target[a] and pre[i])"
   'SINCE': lambda target, i, args:
-    ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
-      value=ast.BoolOp(
+      ast.BoolOp(
         op=ast.Or(),
         values=[
           ast.Subscript(
@@ -198,13 +186,12 @@ loop_dict = {
             ],
           ),
         ],
-      ),
-    ),
+      )
+  ,
 
   # ONCE a: "target[i] = pre[i] or target[a]"
   'ONCE': lambda target, i, args:
-    ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
-      value=ast.BoolOp(
+      ast.BoolOp(
         op=ast.Or(),
         values=[
           ast.Subscript(
@@ -218,13 +205,12 @@ loop_dict = {
             ctx=ast.Load(),
           ),
         ],
-      ),
-    ),
-    
+      )
+  ,
+
   # HIST a: "target[i] = pre[i] and target[a]"
   'HIST': lambda target, i, args:
-    ast.Assign(targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=i)), ctx=ast.Store())],
-      value=ast.BoolOp(
+      ast.BoolOp(
         op=ast.And(),
         values=[
           ast.Subscript(
@@ -238,8 +224,8 @@ loop_dict = {
             ctx=ast.Load(),
           ),
         ],
-      ),
-    ),
+      )
+  ,
 }
 
 def generate_solver(terms, atoms):
@@ -274,11 +260,11 @@ class transformer(ast.NodeTransformer):
       # tt[0] is the actual term while
       # tt[1] the offset of the second argument (if any)
       t = tt[0]
-      newnode = None
+      newvalue = None
       term_idx = self.term_cnt-1-i
       if isinstance(t, str):
         vprint("%s[%d] = state[%s]" % (target, term_idx, t))
-        newnode = op_dict['atom'](target, term_idx, t)
+        newvalue = op_dict['atom'](target, term_idx, t)
       elif isinstance(t, tuple):
         op = t[0]
         try:
@@ -290,13 +276,17 @@ class transformer(ast.NodeTransformer):
         a = term_idx + 1
         b = term_idx + 1 + tt[1]
         vprint("%s[%d] = %s(..., %s[%d], %s[%d])" % (target, term_idx, op, target, a, target, b))
-        newnode = assign(target, term_idx, [a, b])
+        newvalue = assign(target, term_idx, [a, b])
       elif isinstance(t, bool):
         vprint("%s[%d] = %s" % (target, term_idx, str(t)))
-        newnode = op_dict['bool'](target, term_idx, t)
+        newvalue = op_dict['bool'](target, term_idx, t)
       else:
         raise Exception("Unknown term type at %d: %s (%s)" % (i, type(t), t))
 
+      newnode = ast.Assign(
+        targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=term_idx)), ctx=ast.Store())],
+        value=newvalue
+      )
       newnode.lineno = node.lineno
       newnode.col_offset = node.col_offset
       ast.fix_missing_locations(newnode)
