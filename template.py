@@ -32,5 +32,5 @@ def solve(trace, term_cnt):
     if now[0] == 0:
       return 1 # Fail immediately w/o taking further states into account
 
-    pre = now
+    pre = now.copy()
   return 0
