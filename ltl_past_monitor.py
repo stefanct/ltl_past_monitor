@@ -47,9 +47,12 @@ def verify_csv(path, ltl_file, debug=False):
     vprint("\nRunning verifier for formula %d..." % i)
     cur = solve(iter(states), len(t))
     vprintn("Formula %d " % i)
-    vprint("failed" if cur != 0 else "passed")
+    if cur[0] != 0:
+      vprint("failed at step %d" % cur[1])
+      ret += 1
+    else:
+      vprint("passed")
     vprint()
-    ret += cur
   return ret
 
 def parse_ltl(path, variables, debug):
