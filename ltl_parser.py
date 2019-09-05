@@ -202,9 +202,9 @@ class parser(object):
   start = 'formula' # Make sure we use the right rule as root of the grammar
   tokens = _lexer.tokens
   precedence = (
-    ('left', 'NEWLINE'),
-    ('right','NOT','S_PREV','W_PREV','S_NEXT','W_NEXT','ONCE','HIST','EVENTUALLY','ALWAYS'),
     ('left','OR','AND','IMP','SINCE','UNTIL'),
+    ('right','NOT','S_PREV','W_PREV','S_NEXT','W_NEXT','ONCE','HIST','EVENTUALLY','ALWAYS'),
+    ('left', 'NEWLINE'),
   )
 
   # dictionary of symbols
