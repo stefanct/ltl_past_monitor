@@ -5,6 +5,14 @@ def print_state(i, state):
   stmts = map(lambda k: k+'='+str(state[k]), state.keys())
   vprint("state[%d]: %s" % (i, ', '.join(stmts)))
 
+def print_array(arr, name):
+  for i, v in enumerate(arr):
+    vprint("%s[%d] = %s" % (name, i, v))
+
+def print_array_rev(arr, name):
+  for i, v in reversed(list(enumerate(arr))):
+    vprint("%s[%d] = %s" % (name, i, v))
+
 # Tries to satisfy the formula it is built for with the given trace
 # The input trace needs to be an iterator pointing to the initial state
 # in form of a dictionary mapping variable names to their (boolean) value.
@@ -14,7 +22,8 @@ def solve(trace, term_cnt):
 
   # Initialization
   state = trace[0]
-  print_state(0, state)
+  print_array(trace, "trace")
+  vprint()
 
   # The next statement will be replaced by expressions to initialize pre
   template_init="template_init"
@@ -34,5 +43,8 @@ def solve(trace, term_cnt):
       return [1, i] # Fail immediately w/o taking further states into account
 
     pre = now.copy()
+
+    print_array_rev(pre, "pre")
+    print_array_rev(now, "now")
 
   return [0]
