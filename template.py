@@ -13,7 +13,7 @@ def solve(trace, term_cnt):
   now = [None]*term_cnt
 
   # Initialization
-  state = next(trace)
+  state = trace[0]
   print_state(0, state)
 
   # The next statement will be replaced by expressions to initialize pre
@@ -24,7 +24,7 @@ def solve(trace, term_cnt):
 
   # Event interpretation loop
   iteration = 1
-  for i, state in enumerate(trace, start=1):
+  for i, state in enumerate(trace[1:], start=1):
     print_state(i, state)
 
     # The next statement will be replaced by expressions to update now according to state
