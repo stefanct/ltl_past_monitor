@@ -7,13 +7,13 @@ from debug import *
 # Helper functions #
 ####################
 
-# S_PREV, W_PREV a: "now[i] = pre[a]"
-def prev(target, term, term_i, args):
-  return ast.parse("pre[{a}]".format(a=args[0]))
+# S_PREV, W_PREV a: "d[i-1][a]"
+def prev(term, term_i, args):
+  return ast.parse("d[i-1][{a}]".format(a=args[0]))
 
-# Simply set target[i] = target[a]
-def init_target(target, term, term_i, args):
-  return ast.parse("{t}[{a}]".format(t=target, a=args[0]))
+# Get value of other term with index a of current time step
+def init_target(term, term_i, args):
+  return ast.parse("d[i][{a}]".format(a=args[0]))
 
 ######################################
 # Hashmap of initialization routines #
@@ -22,37 +22,37 @@ init_dict = {
   ###################################################################################################
   # Nullary operators (atoms, truth values)                                                         #
   ###################################################################################################
-  # boolean: target[i] = b
-  'bool': lambda target, term, term_i, b:
-    ast.parse("{b}".format(b=b)),
+  # boolean: b
+  'bool': lambda term, term_i, b:
+    ast.parse("{0}".format(b)),
 
-  # $atom: target[i] = state['atom']
-  'atom': lambda target, term, term_i, atom:
+  # $atom: state['atom']
+  'atom': lambda term, term_i, atom:
     ast.parse("state['{atom}']".format(atom=atom)),
 
   ###################################################################################################
   # Unary operators ('NOT','S_PREV','W_PREV','S_NEXT','W_NEXT','ONCE','HIST','EVENTUALLY','ALWAYS') #
   # To initialize pre[i] we simply need to take into account pre[args[0]] (args[1] is ignored)      #
   ###################################################################################################
-  # NOT: "target[i] = not target[args[0]]"
-  'NOT': lambda target, term, term_i, args:
-    ast.parse("not {0}[{1[0]}] if {0}[{1[0]}] is not None else None".format(target, args)),
+  # NOT: not d[i][a]
+  'NOT': lambda term, term_i, args:
+    ast.parse("not d[i][{a}] if d[i][{a}] is not None else None".format(a=args[0])),
 
-  # S_PREV: "target[i] = 0"
-  'S_PREV': lambda target, term, term_i, args:
+  # S_PREV: 0
+  'S_PREV': lambda term, term_i, args:
     ast.parse("False"),
 
-  # W_PREV: "target[i] = a" - This is actually the only difference to S_PREV
+  # W_PREV: a - This is actually the only difference to S_PREV
   'W_PREV': init_target,
 
-  # ONCE a: "target[i] = a"
+  # ONCE a: a
   'ONCE': init_target,
 
-  # HIST a: "target[i] = a"
+  # HIST a: a
   'HIST': init_target,
 
-  # W_NEXT a: "target[i] = None"
-  'W_NEXT': lambda target, term, term_i, args:
+  # W_NEXT a: None
+  'W_NEXT': lambda term, term_i, args:
     ast.parse("None"),
 
   #######################################################
@@ -62,21 +62,21 @@ init_dict = {
   # This needs to be done at build-time so this becomes relatively easy again:
   # We assume here to simply get the two respective indices as inputs.
   
-  # $a OR $b: "target[i] = target[a] or target[b]"
-  'OR': lambda target, term, term_i, args:
-    ast.parse("{0}[{a}] or {0}[{b}] if None not in [{0}[{a}],{0}[{b}]] else None".format(target, a=args[0], b=args[1])),
+  # $a OR $b: d[i][a] or d[i][b]"
+  'OR': lambda term, term_i, args:
+    ast.parse("d[i][{a}] or d[i][{b}] if None not in [d[i][{a}],d[i][{b}]] else None".format(a=args[0], b=args[1])),
 
-  # $a AND $b: "target[i] = target[a] and target[b]"
-  'AND': lambda target, term, term_i, args:
-    ast.parse("{0}[{a}] and {0}[{b}] if None not in [{0}[{a}],{0}[{b}]] else None".format(target, a=args[0], b=args[1])),
+  # $a AND $b: d[i][i] = d[i][a] and d[i][b]
+  'AND': lambda term, term_i, args:
+    ast.parse("d[i][{a}] and d[i][{b}] if None not in [d[i][{a}],d[i][{b}]] else None".format(a=args[0], b=args[1])),
 
-  # $a IMP $b: "target[i] = (not target[a]) or target[b]"
-  'IMP': lambda target, term, term_i, args:
-    ast.parse("not {0}[{a}] or {0}[{b}] if None not in [{0}[{a}],{0}[{b}]] else None".format(target, a=args[0], b=args[1])),
+  # $a IMP $b: not d[i][a]) or d[i][b]
+  'IMP': lambda term, term_i, args:
+    ast.parse("not d[i][{a}] or d[i][{b}] if None not in [d[i][{a}],d[i][{b}]] else None".format(a=args[0], b=args[1])),
 
-  # $a SINCE $b: "target[i] = target[b]"
-  'SINCE': lambda target, term, term_i, args:
-    ast.parse("{0}[{b}]".format(target, b=args[1])),
+  # $a SINCE $b: d[i][b]
+  'SINCE': lambda term, term_i, args:
+    ast.parse("d[i][{b}]".format(b=args[1])),
 }
 
 ###############################
@@ -93,18 +93,20 @@ loop_dict = {
   'S_PREV': prev,
   'W_PREV': prev,
 
-  # $a SINCE $b: "target[i] = target[b] or (target[a] and pre[i])"
-  'SINCE': lambda target, term, term_i, args:
-    ast.parse("{t}[{b}] or ({t}[{a}] and pre[{i}]) if None not in [{t}[{a}],{t}[{b}],pre[{i}]] else None".format(t=target, a=args[0], b=args[1], i=term_i)),
+  # $a SINCE $b: d[i][b] or (d[i][a] and d[i-1][term_i])
+  'SINCE': lambda term, term_i, args:
+    ast.parse("d[i][{b}] or (d[i][{a}] and d[i-1][{term_i}]) if None not in [d[i][{a}],d[i][{b}],d[i-1][{term_i}]] else None".format(a=args[0], b=args[1], term_i=term_i)),
 
-  # ONCE a: "target[i] = pre[i] or target[a]"
-  'ONCE': lambda target, term, term_i, args:
-    ast.parse("pre[{i}] or {t}[{a}] if None not in [{t}[{a}],pre[{i}]] else None".format(i=term_i, t=target, a=args[0])),
+  # ONCE a: d[i-1][i] or d[i][a]"
+  'ONCE': lambda term, term_i, args:
+    ast.parse("d[i-1][{term_i}] or d[i][{a}] if None not in [d[i-1][{term_i}],d[i][{a}]] else None".format(term_i=term_i, a=args[0])),
 
-  # HIST a: "target[i] = pre[i] and target[a]"
-  'HIST': lambda target, term, term_i, args:
-    ast.parse("pre[{i}] and {t}[{a}] if None not in [{t}[{a}],pre[{i}]] else None".format(i=term_i, t=target, a=args[0])),
+  # HIST a: d[i-1][i] and d[i][a]
+  'HIST': lambda term, term_i, args:
+    ast.parse("d[i-1][{term_i}] and d[i][{a}] if None not in [d[i-1][{term_i}],d[i][{a}]] else None".format(term_i=term_i, a=args[0])),
 }
+
+
 
 def generate_solver(terms, atoms):
   namespace = {}
@@ -132,7 +134,7 @@ class transformer(ast.NodeTransformer):
 
     super().__init__()
 
-  def template_modifier(self, op_dict, target, node):
+  def template_modifier(self, op_dict, node):
     nodes = []
     for i, tt in enumerate(reversed(self.terms)):
       # tt[0] is the actual term while
@@ -141,8 +143,8 @@ class transformer(ast.NodeTransformer):
       newvalue = None
       term_idx = self.term_cnt-1-i
       if isinstance(t, str):
-        vprint("%s[%d] = state[%s]" % (target, term_idx, t))
-        newvalue = op_dict['atom'](target, t, term_idx, t)
+        vprint("d[i][%d] = state[%s]" % (term_idx, t))
+        newvalue = op_dict['atom'](t, term_idx, t)
       elif isinstance(t, tuple):
         op = t[0]
         try:
@@ -153,16 +155,30 @@ class transformer(ast.NodeTransformer):
 
         a = term_idx + 1
         b = term_idx + 1 + tt[1]
-        vprint("%s[%d] = %s(..., %s[%d], %s[%d])" % (target, term_idx, op, target, a, target, b))
-        newvalue = assign(target, t, term_idx, [a, b])
+        vprint("d[i][%d] = %s(..., d[i][%d], d[i][%d])" % (term_idx, op, a, b))
+        newvalue = assign(t, term_idx, [a, b])
       elif isinstance(t, bool):
-        vprint("%s[%d] = %s" % (target, term_idx, str(t)))
-        newvalue = op_dict['bool'](target, t, term_idx, t)
+        vprint("d[i][%d] = %s" % (term_idx, str(t)))
+        newvalue = op_dict['bool'](t, term_idx, t)
       else:
         raise Exception("Unknown term type at %d: %s (%s)" % (i, type(t), t))
 
       newnode = ast.Assign(
-        targets=[ast.Subscript(value=ast.Name(id=target, ctx=ast.Load()), slice=ast.Index(value=ast.Num(n=term_idx)), ctx=ast.Store())],
+        targets=[
+          ast.Subscript(
+            value=ast.Subscript(
+              value=ast.Name(id='d', ctx=ast.Load()),
+              slice=ast.Index(
+                value=ast.Name(id='i', ctx=ast.Load()),
+              ),
+              ctx=ast.Load(),
+            ),
+            slice=ast.Index(
+              value=ast.Num(n=term_idx),
+            ),
+            ctx=ast.Store(),
+          ),
+        ],
         # The parsed ASTs contain a whole module that we need to unwrap
         value=newvalue.body[0].value
       )
@@ -176,11 +192,10 @@ class transformer(ast.NodeTransformer):
     target = node.targets[0]
 
     if (isinstance(target, ast.Name) and target.id =='template_init' and node.value.s == 'template_init'):
-      vprint("Generating initialization")
-      return self.template_modifier(init_dict, 'pre', node)
-
-    if (isinstance(target, ast.Name) and target.id =='template_loop' and node.value.s == 'template_loop'):
-      vprint("\nGenerating loop assignments")
-      return self.template_modifier(loop_dict, 'now', node)
+      vprint("Generating ptLTL initialization")
+      node = self.template_modifier(init_dict, node)
+    elif (isinstance(target, ast.Name) and target.id =='template_loop' and node.value.s == 'template_loop'):
+      vprint("\nGenerating ptLTL loop assignments")
+      node = self.template_modifier(loop_dict, node)
 
     return node
