@@ -11,6 +11,10 @@ from debug import *
 def prev(term, term_i, args):
   return ast.parse("d[i-1][{a}]".format(a=args[0]))
 
+# S_NEXT, W_NEXT a: "d[i+1][a]"
+def next(term, term_i, args):
+  return ast.parse("d[i+1][{a}]".format(a=args[0]))
+
 # Get value of other term with index a of current time step
 def init_target(term, term_i, args):
   return ast.parse("d[i][{a}]".format(a=args[0]))
@@ -106,7 +110,30 @@ loop_dict = {
     ast.parse("d[i-1][{term_i}] and d[i][{a}] if None not in [d[i-1][{term_i}],d[i][{a}]] else None".format(term_i=term_i, a=args[0])),
 }
 
+###############################
+# Hashmaps for the ftLTL part #
+###############################
+init_nxt_dict = {
+  'bool': init_dict['bool'],
 
+  'atom': lambda term, term_i, a:
+    ast.parse("trace[-1]['{a}']".format(a=a)),
+
+  # W_NEXT a: trace[i][a]
+  'W_NEXT': init_target,
+
+  # S_NEXT a: 0
+  'S_NEXT': lambda term, term_i, args:
+    ast.parse("0"),
+}
+
+future_loop_dict = {
+  'bool': init_dict['bool'],
+  'atom': init_dict['atom'],
+
+  'W_NEXT': next,
+  'S_NEXT': next,
+}
 
 def generate_solver(terms, atoms):
   namespace = {}
@@ -156,7 +183,7 @@ class transformer(ast.NodeTransformer):
         try:
           assign = op_dict[op]
         except KeyError as e:
-          print("FIXME: Unknown operation '%s'" % (op))
+          # operation is handled by another dictionary
           continue
 
         a = term_idx + 1
@@ -182,8 +209,14 @@ class transformer(ast.NodeTransformer):
     if (isinstance(target, ast.Name) and target.id =='template_init' and node.value.s == 'template_init'):
       vprint("Generating ptLTL initialization")
       node = self.template_modifier(init_dict, node)
+    elif (isinstance(target, ast.Name) and target.id =='template_ltl_init' and node.value.s == 'template_ltl_init'):
+      vprint("Generating ftLTL initialization")
+      node = self.template_modifier(init_nxt_dict, node)
     elif (isinstance(target, ast.Name) and target.id =='template_loop' and node.value.s == 'template_loop'):
       vprint("\nGenerating ptLTL loop assignments")
       node = self.template_modifier(loop_dict, node)
+    elif (isinstance(target, ast.Name) and target.id =='template_future_loop' and node.value.s == 'template_future_loop'):
+      vprint("\nGenerating ftLTL loop assignments")
+      node = self.template_modifier(future_loop_dict, node)
 
     return node

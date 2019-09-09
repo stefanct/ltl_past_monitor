@@ -76,6 +76,26 @@ def solve(trace, term_cnt):
 
       vprint()
 
+    vprint("ptLTL #%d done:" % iteration)
+    print_matrix(d)
+
+    i = state_cnt-1
+    vprint("\nRunning ftLTL init #%d..." % iteration)
+    # The next statement will be replaced by expressions to initialize state 0 under ftLTL interpretation
+    template_ltl_init="template_ltl_init"
+
+    print_matrix(d)
+
+    # ftLTL interpretation loop
+    vprint("\nRunning ftLTL loop interpretation #%d..." % iteration)
+    for i, state in reversed(list(enumerate(trace[:-1]))):
+      print_state(i, state)
+
+      # The next statement will be replaced by expressions to update states n-1-1... under ftLTL interpretation
+      template_future_loop="template_future_loop"
+
+      print_matrix(d)
+
     # Check result, i.e., test the values in the first column of d.
     # If there are still time stamps with indeterminate results (None), continue.
     # If any entry in the first column contains a 0 value, the formula is not
