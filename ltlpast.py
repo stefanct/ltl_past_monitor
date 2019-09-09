@@ -19,6 +19,10 @@ def next(term, term_i, args):
 def init_target(term, term_i, args):
   return ast.parse("d[i][{a}]".format(a=args[0]))
 
+# Get value of other term with index b of current time step
+def init_target_b(term, term_i, args):
+  return ast.parse("d[i][{b}]".format(b=args[1]))
+
 ######################################
 # Hashmap of initialization routines #
 ######################################
@@ -59,9 +63,9 @@ init_dict = {
   'W_NEXT': lambda term, term_i, args:
     ast.parse("None"),
 
-  #######################################################
-  # Binary operators ('OR','AND','IMP','SINCE','UNTIL') #
-  #######################################################
+  ###############################################
+  # Binary operators ('OR','AND','IMP','SINCE') #
+  ###############################################
   # Binops need a bit more context to gather their inputs.
   # This needs to be done at build-time so this becomes relatively easy again:
   # We assume here to simply get the two respective indices as inputs.
@@ -128,6 +132,9 @@ init_nxt_dict = {
 
   # ALWAYS a: d[i][a]
   'ALWAYS': init_target,
+
+  # a UNTIL b: b
+  'UNTIL': init_target_b,
 }
 
 future_loop_dict = {
@@ -140,6 +147,10 @@ future_loop_dict = {
   # ALWAYS a: d[i][a] and d[i+1][term_i]
   'ALWAYS': lambda term, term_i, args:
     ast.parse("d[i][{a}] and d[i+1][{term_i}]".format(term_i=term_i, a=args[0])),
+
+  # a UNTIL b: d[i][b] or (d[i][a] and d[i+1][term_i])
+  'UNTIL': lambda term, term_i, args:
+    ast.parse("d[i][{b}] or (d[i][{a}] and d[i+1][{term_i}])".format(term_i=term_i, a=args[0], b=args[1])),
 }
 
 def generate_solver(terms, atoms):
