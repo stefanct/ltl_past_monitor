@@ -163,23 +163,11 @@ class transformer(ast.NodeTransformer):
       else:
         raise Exception("Unknown term type at %d: %s (%s)" % (i, type(t), t))
 
+      lhs = ast.parse("d[i][{term_i}] = True".format(term_i=term_idx))
+
       newnode = ast.Assign(
-        targets=[
-          ast.Subscript(
-            value=ast.Subscript(
-              value=ast.Name(id='d', ctx=ast.Load()),
-              slice=ast.Index(
-                value=ast.Name(id='i', ctx=ast.Load()),
-              ),
-              ctx=ast.Load(),
-            ),
-            slice=ast.Index(
-              value=ast.Num(n=term_idx),
-            ),
-            ctx=ast.Store(),
-          ),
-        ],
         # The parsed ASTs contain a whole module that we need to unwrap
+        targets=[lhs.body[0].targets[0]],
         value=newvalue.body[0].value
       )
       newnode.lineno = node.lineno
