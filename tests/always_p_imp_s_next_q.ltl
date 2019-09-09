@@ -1,0 +1,1 @@
+always(p imp s_next(q))

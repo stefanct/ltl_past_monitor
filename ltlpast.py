@@ -35,7 +35,7 @@ init_dict = {
     ast.parse("state['{atom}']".format(atom=atom)),
 
   ###################################################################################################
-  # Unary operators ('NOT','S_PREV','W_PREV','S_NEXT','W_NEXT','ONCE','HIST','EVENTUALLY','ALWAYS') #
+  # Unary operators ('NOT','S_PREV','W_PREV','S_NEXT','W_NEXT','ONCE','HIST')                       #
   # To initialize pre[i] we simply need to take into account pre[args[0]] (args[1] is ignored)      #
   ###################################################################################################
   # NOT: not d[i][a]
@@ -125,6 +125,9 @@ init_nxt_dict = {
   # S_NEXT a: 0
   'S_NEXT': lambda term, term_i, args:
     ast.parse("0"),
+
+  # ALWAYS a: d[i][a]
+  'ALWAYS': init_target,
 }
 
 future_loop_dict = {
@@ -133,6 +136,10 @@ future_loop_dict = {
 
   'W_NEXT': next,
   'S_NEXT': next,
+
+  # ALWAYS a: d[i][a] and d[i+1][term_i]
+  'ALWAYS': lambda term, term_i, args:
+    ast.parse("d[i][{a}] and d[i+1][{term_i}]".format(term_i=term_i, a=args[0])),
 }
 
 def generate_solver(terms, atoms):

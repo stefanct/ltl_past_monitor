@@ -1,4 +1,5 @@
 import math
+import functools
 from debug import *
 
 # vprint all variable assignments of the given state
@@ -95,6 +96,7 @@ def solve(trace, term_cnt):
       template_future_loop="template_future_loop"
 
       print_matrix(d)
+
 
     # Check result, i.e., test the values in the first column of d.
     # If there are still time stamps with indeterminate results (None), continue.
