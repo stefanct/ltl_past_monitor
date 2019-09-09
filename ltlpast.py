@@ -134,6 +134,12 @@ class transformer(ast.NodeTransformer):
 
     super().__init__()
 
+  def fix_locations(self, prev_node, new_node, i):
+    new_node.lineno = prev_node.lineno+i*3
+    new_node.col_offset = prev_node.col_offset
+    ast.fix_missing_locations(new_node)
+    return new_node
+
   def template_modifier(self, op_dict, node):
     nodes = []
     for i, tt in enumerate(reversed(self.terms)):
@@ -163,17 +169,11 @@ class transformer(ast.NodeTransformer):
       else:
         raise Exception("Unknown term type at %d: %s (%s)" % (i, type(t), t))
 
-      lhs = ast.parse("d[i][{term_i}] = True".format(term_i=term_idx))
+      # Below we make sure that no previous calculations stored in d get overwritten
+      ifnode = ast.parse("if d[i][{term_i}] is None:  d[i][{term_i}] = True".format(term_i=term_idx)).body[0]
+      ifnode.body[0].value = newvalue.body[0].value
+      nodes.append(self.fix_locations(node, ifnode, i))
 
-      newnode = ast.Assign(
-        # The parsed ASTs contain a whole module that we need to unwrap
-        targets=[lhs.body[0].targets[0]],
-        value=newvalue.body[0].value
-      )
-      newnode.lineno = node.lineno
-      newnode.col_offset = node.col_offset
-      ast.fix_missing_locations(newnode)
-      nodes.append(newnode)
     return nodes
 
   def visit_Assign(self, node):
