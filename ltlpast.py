@@ -133,6 +133,10 @@ init_nxt_dict = {
   # ALWAYS a: d[i][a]
   'ALWAYS': init_target,
 
+  # EVENTUALLY a: s_next(a) == 0
+  'EVENTUALLY': lambda term, term_i, args:
+    ast.parse("0"),
+
   # a UNTIL b: b
   'UNTIL': init_target_b,
 }
@@ -147,6 +151,10 @@ future_loop_dict = {
   # ALWAYS a: d[i][a] and d[i+1][term_i]
   'ALWAYS': lambda term, term_i, args:
     ast.parse("d[i][{a}] and d[i+1][{term_i}]".format(term_i=term_i, a=args[0])),
+
+  # EVENTUALLY a: d[i][a] or d[i+1][term_i]
+  'EVENTUALLY': lambda term, term_i, args:
+    ast.parse("d[i][{a}] or d[i+1][{term_i}]".format(term_i=term_i, a=args[0])),
 
   # a UNTIL b: d[i][b] or (d[i][a] and d[i+1][term_i])
   'UNTIL': lambda term, term_i, args:
