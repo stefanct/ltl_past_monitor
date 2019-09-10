@@ -33,11 +33,11 @@ def verify_csv(path, ltl_file, debug=False):
   # Convert state tuples from strings to boolean values
   for i, s in enumerate(states):
     for k in s.keys():
-      if s[k] == None or s[k] == '':
+      if s[k] == None or s[k].strip() == '':
         print("Value of %s in line %d not specified, assuming 0" % (k, i+1))
         s[k] = False
         continue
-      s[k] = distutils.util.strtobool(s[k])
+      s[k] = distutils.util.strtobool(s[k].strip())
 
   list_of_terms = parse_ltl(ltl_file, atoms, debug)
   ret = 0
