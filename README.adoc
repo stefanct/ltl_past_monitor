@@ -1,0 +1,107 @@
+:toc:
+:toc-placement!:
+
+= LTL+past Solver
+
+This project was done as partial fulfillment of the link:https://tiss.tuwien.ac.at/course/courseDetails.xhtml?courseNr=191106&semester=2019S[Runtime Verification course] at link:https://www.tuwien.at/en/[TU Wien].
+
+[.lead]
+It reads LTL+past formulas and a state trace from files and verifies that all formulas are satisfied in all states.
+The LTL+past grammar is defined as
+
+====
+φ ≔ p | not φ | φ~1~ ∨ φ~2~ | φ~1~ ∧ φ~2~ | φ~1~ implies φ~2~ | w_prev φ | s_prev φ | once φ | w_next φ | s_next φ | historically φ | φ~1~ since φ~2~ | eventually φ | always φ | φ~1~ until φ~2~
+====
+
+toc::[]
+
+== Implementation
+
+My solution is based on two dynamic programming algorithms by Havelund and Rosu[1,2].
+Their implementations operate on specific subsets of LTL formulas, i.e., Past Linear Temporal Logic (ptLTL) and traditional LTL operators ("ftLTL" hereinafter), respectively.
+In both algorithms they process the input traces in a very efficient manner by shifting a small window (of only two time instances) in the direction of time (for ptLTL) and in reverse (for ftLTL).
+By doing so they are able to calculate intermediate results for each time step iteratively without access to the whole trace and can still reason about the global satisfiability.
+For ftLTL, however, this means that the end of the trace is accessed first and thus the complete finite trace has to be available from the beginning.
+
+Combining the two algorithms to support the union of operators of both languages is not trivial as they operate in different temporal directions without storing the complete set of intermediate results.
+A straight-forward way to overcome this is to store the intermediate results of all time instances and iterate between forward and backward processing until a final judgment can be made.
+This increases the memory requirements dramatically (s⋅t instead of s⋅2 where s is the number of time instances ("states") and t is the number of subterms obtained from the formula).
+It also increases the computing complexity, which is now depending on the composition of the formula (not only the number of subterms).
+
+=== Prerequisites
+
+Development was done with…
+
+  - Python 3.5.3 (interpreter + CSV library + AST manipulation)
+  - PLY 3.9 (parser)
+  - pytest 3.0.6 (only to run unit tests via tests.py)
+
+=== Execution
+
+To verify that a trace stored in `csv_file` satisfies the LTL formulas in `ltl_file` execute `./ltl_past_monitor.py ltl_file csv_file`.
+
+==== Tests
+
+The project comes with a number of test cases in `tests/`.
+To run them you have to have pytest installed and execute `./tests.py`.
+
+=== Extra Features
+
+==== Multiple formulas
+
+The parser of the LTL files is able to read in multiple formulas (one per line).
+The monitor verifies them serially and succeeds only if all of them pass.
+
+==== Command Line Interface
+
+The CLI follows standard Unix customs and allows the user to increase verbosity of the output by supplying up to two `-v` options.
+
+==== Formula Optimizations
+
+Some trivial optimizations are done by the parser while reading in the formulas.
+
+==== Grammar Extensions
+
+The problem specification does not mention binary constants (unlike the paper that includes them in its grammar).
+I have implemented them as well.
+
+Line comments in LTL files are started by `#` or `//`.
+
+== Future Work
+
+=== Run-time Optimizations
+
+In the current version the verifier processes the whole trace twice (in forward and backward direction) at least once before giving a verdict.
+If this is not sufficient to determine all intermediate results further passes are conducted till a judgment can be made.
+It would be beneficial to calculate the optimal order of passes at generation time depending on the formula.
+
+=== Multi-line Comments in Formula Files
+
+I could not get them to work fast enough.
+
+=== Parallelization of Verification
+
+The current implementation does not run the solvers in parallel but serially.
+It should be trivial to run them on worker threads.
+
+=== Deduplication of Variables
+
+Currently, if a variable is encountered multiple times in a formula it is handled separately/calculated multiple times.
+Run-time optimizers might take care of that already though.
+
+=== Further Optimizations in the Parser
+
+There is certainly some room to optimize the parsed formulas further.
+Similarly to the deduplication of variables, it would be interesting to see if this is actually beneficial or if the run-time optimizers (e.g., JITs) take care of that anyway.
+
+=== Variable Coverage
+
+While the code checks that variables used in the formula are available in the CSV data, the converse is not true.
+This might however be beneficial if a CSV file is to be used with multiple formulas.
+
+== References
+
+. _Synthesizing Monitors for Safety Properties;_ Havelund K., Roşu G.; 2002 +
+    https://doi.org/10.1007/3-540-46002-0_24
+. _Synthesizing Dynamic Programming Algorithms from Linear Temporal Logic Formulae;_ Roşu, G., Havelund, K.; 2001 +
+    https://ntrs.nasa.gov/archive/nasa/casi.ntrs.nasa.gov/20010106096.pdf
