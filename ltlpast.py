@@ -59,10 +59,6 @@ init_dict = {
   # HIST a: a
   'HIST': init_target,
 
-  # W_NEXT a: None
-  'W_NEXT': lambda term, term_i, args:
-    ast.parse("None"),
-
   ###############################################
   # Binary operators ('OR','AND','IMP','SINCE') #
   ###############################################
@@ -123,8 +119,9 @@ init_nxt_dict = {
   'atom': lambda term, term_i, a:
     ast.parse("trace[-1]['{a}']".format(a=a)),
 
-  # W_NEXT a: trace[i][a]
-  'W_NEXT': init_target,
+  # W_NEXT a: 1
+  'W_NEXT': lambda term, term_i, args:
+    ast.parse("1"),
 
   # S_NEXT a: 0
   'S_NEXT': lambda term, term_i, args:
