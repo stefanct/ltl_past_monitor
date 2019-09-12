@@ -5,38 +5,38 @@ from debug import *
 # vprint all variable assignments of the given state
 def print_state(i, state):
   stmts = map(lambda k: k+'='+str(state[k]), state.keys())
-  vprint("state[%d]: %s" % (i, ', '.join(stmts)))
+  vvprint("state[%d]: %s" % (i, ', '.join(stmts)))
 
 # Print the data matrix (transposed for better readability)
 def print_matrix(mat):
   t_width = int(math.log10(len(mat[0]))+1)
   field_indent = t_width + 1
 
-  vprintn("%sT%s" % (' '*(t_width-1), ' '*(field_indent - t_width)))
+  vvprintn("%sT%s" % (' '*(t_width-1), ' '*(field_indent - t_width)))
   for i in range(len(mat)):
-    vprintn("%d" % (i%10))
-  vprint()
+    vvprintn("%d" % (i%10))
+  vvprint()
 
   for i in range(len(mat[0])):
-    vprintn("%*d|" % (t_width, i))
+    vvprintn("%*d|" % (t_width, i))
     for j in range(len(mat)):
       v = mat[j][i]
-      vprintn("%s" % (' ' if v is None else int(v)))
-    vprintn("|%d" % (i))
-    vprint()
+      vvprintn("%s" % (' ' if v is None else int(v)))
+    vvprintn("|%d" % (i))
+    vvprint()
 
-  vprintn("%sS" % (' '*(t_width)))
+  vvprintn("%sS" % (' '*(t_width)))
   for i in range(len(mat)):
-    vprintn("%d" % (i%10))
-  vprint()
+    vvprintn("%d" % (i%10))
+  vvprint()
 
 def print_array(arr, name):
   for i, v in enumerate(arr):
-    vprint("%s[%d] = %s" % (name, i, v))
+    vvprint("%s[%d] = %s" % (name, i, v))
 
 def print_array_rev(arr, name):
   for i, v in reversed(list(enumerate(arr))):
-    vprint("%s[%d] = %s" % (name, i, v))
+    vvprint("%s[%d] = %s" % (name, i, v))
 
 # Tries to satisfy the formula it is built for with the given trace
 # The input trace needs to be an iterator pointing to the initial state
@@ -75,9 +75,9 @@ def solve(trace, term_cnt):
       if d[i][0] == 0:
         return [1, i] # Fail immediately w/o taking further states into account
 
-      vprint()
+      vvprint()
 
-    vprint("ptLTL #%d done:" % iteration)
+    vvprint("ptLTL #%d done:" % iteration)
     print_matrix(d)
 
     i = state_cnt-1

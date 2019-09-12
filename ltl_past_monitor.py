@@ -48,10 +48,10 @@ def verify_csv(path, ltl_file, debug=False):
     cur = solve(states, len(t))
     vprintn("Formula %d " % i)
     if cur[0] != 0:
-      vprint("failed at step %d" % cur[1])
+      vprint("\033[1mfailed\033[0m at step %d" % cur[1])
       ret += 1
     else:
-      vprint("passed")
+      vprint("\033[1mpassed\033[0m")
     vprint()
   return ret
 

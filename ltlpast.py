@@ -199,7 +199,7 @@ class transformer(ast.NodeTransformer):
       newvalue = None
       term_idx = self.term_cnt-1-i
       if isinstance(t, str):
-        vprint("d[i][%d] = state[%s]" % (term_idx, t))
+        vvprint("d[i][%d] = state[%s]" % (term_idx, t))
         newvalue = op_dict['atom'](t, term_idx, t)
       elif isinstance(t, tuple):
         op = t[0]
@@ -211,10 +211,10 @@ class transformer(ast.NodeTransformer):
 
         a = term_idx + 1
         b = term_idx + 1 + tt[1]
-        vprint("d[i][%d] = %s(..., d[i][%d], d[i][%d])" % (term_idx, op, a, b))
+        vvprint("d[i][%d] = %s(..., d[i][%d], d[i][%d])" % (term_idx, op, a, b))
         newvalue = assign(t, term_idx, [a, b])
       elif isinstance(t, bool):
-        vprint("d[i][%d] = %s" % (term_idx, str(t)))
+        vvprint("d[i][%d] = %s" % (term_idx, str(t)))
         newvalue = op_dict['bool'](t, term_idx, t)
       else:
         raise Exception("Unknown term type at %d: %s (%s)" % (i, type(t), t))
@@ -230,16 +230,16 @@ class transformer(ast.NodeTransformer):
     target = node.targets[0]
 
     if (isinstance(target, ast.Name) and target.id =='template_init' and node.value.s == 'template_init'):
-      vprint("Generating ptLTL initialization")
+      vvprint("\nGenerating ptLTL initialization")
       node = self.template_modifier(init_dict, node)
     elif (isinstance(target, ast.Name) and target.id =='template_ltl_init' and node.value.s == 'template_ltl_init'):
-      vprint("Generating ftLTL initialization")
+      vvprint("\nGenerating ftLTL initialization")
       node = self.template_modifier(init_nxt_dict, node)
     elif (isinstance(target, ast.Name) and target.id =='template_loop' and node.value.s == 'template_loop'):
-      vprint("\nGenerating ptLTL loop assignments")
+      vvprint("\nGenerating ptLTL loop assignments")
       node = self.template_modifier(loop_dict, node)
     elif (isinstance(target, ast.Name) and target.id =='template_future_loop' and node.value.s == 'template_future_loop'):
-      vprint("\nGenerating ftLTL loop assignments")
+      vvprint("\nGenerating ftLTL loop assignments")
       node = self.template_modifier(future_loop_dict, node)
 
     return node
