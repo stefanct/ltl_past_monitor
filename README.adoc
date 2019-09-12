@@ -99,6 +99,11 @@ Similarly to the deduplication of variables, it would be interesting to see if t
 While the code checks that variables used in the formula are available in the CSV data, the converse is not true.
 This might however be beneficial if a CSV file is to be used with multiple formulas.
 
+== Acknowledgements
+
+The `ast_determinator.py` script helps with understanding the inner structure of Python ASTs by printing a human-readable representation of the AST of a given Python source string.
+It is based on link:https://github.com/asottile/astpretty[astpretty] by Anthony Sottile that is also used as debugging information in verbose output.
+
 == References
 
 . _Synthesizing Monitors for Safety Properties;_ Havelund K., Roşu G.; 2002 +
