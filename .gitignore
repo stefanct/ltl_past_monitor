@@ -10,3 +10,6 @@ parsetab.py
 # pytest-specifiv
 pytestdebug.log
 .cache
+
+# Generated doc files
+*.html
