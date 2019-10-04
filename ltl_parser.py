@@ -3,7 +3,7 @@
 import re
 import distutils.util
 from debug import *
-from collections import Iterable
+from collections.abc import Iterable
 
 class _lexer(object):
   # global tokens
