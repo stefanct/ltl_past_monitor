@@ -58,7 +58,7 @@ def solve(trace, term_cnt):
     template_init="template_init"
 
     if d[i][0] == 0:
-      return [1, 0] # Fail immediately if we start in a bad state
+      return 1 # Fail immediately if we start in a bad state
 
     print_matrix(d)
 
@@ -73,7 +73,7 @@ def solve(trace, term_cnt):
       print_matrix(d)
 
       if d[i][0] == 0:
-        return [1, i] # Fail immediately w/o taking further states into account
+        return 1 # Fail immediately if we start in a bad state
 
       vvprint()
 
@@ -98,17 +98,10 @@ def solve(trace, term_cnt):
       print_matrix(d)
 
 
-    # Check result, i.e., test the values in the first column of d.
-    # If there are still time stamps with indeterminate results (None), continue.
-    # If any entry in the first column contains a 0 value, the formula is not
-    # satisfied by the trace and we return an error.
-    res = [row[0] for row in d]
-    for i, v in enumerate(res):
-      if v == None:
-        break
-      if v == 0:
-        return [1, i]
-    else:
-      return [0]
+    # Check result, i.e., test the value in the first row of the first column of d.
+    # If is still indeterminate (None), continue the algorithm.
+    # Else the satisfiability of the trace is determined by the value of d[i][0].
+    if d[i][0] != None:
+      return not d[i][0]
 
     iteration += 1
