@@ -130,9 +130,8 @@ init_nxt_dict = {
   # ALWAYS a: d[i][a]
   'ALWAYS': init_target,
 
-  # EVENTUALLY a: s_next(a) == 0
-  'EVENTUALLY': lambda term, term_i, args:
-    ast.parse("0"),
+  # EVENTUALLY a: a
+  'EVENTUALLY': init_target,
 
   # a UNTIL b: b
   'UNTIL': init_target_b,
